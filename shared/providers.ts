@@ -162,6 +162,7 @@ export type CapabilityRejectionCode =
   | 'FPS_UNSUPPORTED'
   | 'DURATION_UNSUPPORTED'
   | 'FEATURE_UNSUPPORTED'
+  | 'ARTIFACT_TRANSFER_UNSUPPORTED'
 
 export interface CapabilityRejection {
   code: CapabilityRejectionCode
@@ -197,6 +198,12 @@ export function checkCapability(
   }
   if (request.needsAudioInput && !capabilities.features.audioToVideo) {
     return { code: 'FEATURE_UNSUPPORTED', message: 'This provider does not support audio-to-video.' }
+  }
+  if (capabilities.artifactTransport === 'http-download' && !capabilities.features.artifactTransfer) {
+    return {
+      code: 'ARTIFACT_TRANSFER_UNSUPPORTED',
+      message: 'This provider does not support artifact transfer, so generated results cannot be imported.',
+    }
   }
 
   // No model matrix at all: the provider told us nothing, so refusing here would block
