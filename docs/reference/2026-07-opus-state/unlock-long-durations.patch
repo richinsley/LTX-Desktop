@@ -1,0 +1,32 @@
+diff --git a/backend/api_types.py b/backend/api_types.py
+index 7defc67..47283d8 100644
+--- a/backend/api_types.py
++++ b/backend/api_types.py
+@@ -340,7 +340,8 @@ class LtxInsufficientFundsErrorResponse(BaseModel):
+ 
+ 
+ LTXVideoGenResolution: TypeAlias = Literal["540p", "720p", "1080p", "1440p", "2160p"]
+-LTXVideoGenDuration: TypeAlias = Literal[5, 6, 8, 10, 12, 14, 16, 18, 20]
++# LOCAL PATCH (RTX PRO 5000 72GB): upstream ceiling is 20s; 30/45/60 added to probe this card's real limit.
++LTXVideoGenDuration: TypeAlias = Literal[5, 6, 8, 10, 12, 14, 16, 18, 20, 30, 45, 60]
+ LTXVideoGenFps: TypeAlias = Literal[24, 25, 48, 50]
+ LTXVideoGenPipeline: TypeAlias = Literal["fast", "pro"]
+ 
+diff --git a/backend/runtime_config/model_download_specs.py b/backend/runtime_config/model_download_specs.py
+index e807cb1..68fac5d 100644
+--- a/backend/runtime_config/model_download_specs.py
++++ b/backend/runtime_config/model_download_specs.py
+@@ -100,9 +100,12 @@ _DISTILLED_PIPELINES: tuple[tuple[LTXVideoGenPipeline, LTXVideoGenerationSpec],
+                         24: (5, 6, 8, 10, 20),
+                     },
+                 ),
++                # LOCAL PATCH (RTX PRO 5000 72GB): upstream caps 720p at 10s, tuned for ~16-24GB cards.
++                # We have 72GB and peak at 26GiB for 720p/10s, so the full duration enum is unlocked here.
++                # Revert with ../../model_download_specs.py.orig if syncing upstream.
+                 "720p": _local_resolution_spec(
+                     fps_to_durations={
+-                        24: (5, 6, 8, 10),
++                        24: (5, 6, 8, 10, 12, 14, 16, 18, 20, 30, 45, 60),
+                     },
+                 ),
+                 "1080p": _local_resolution_spec(
