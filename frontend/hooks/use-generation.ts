@@ -3,6 +3,8 @@ import type { GenerationSettings } from '../components/SettingsPanel'
 import { ApiClient, type ApiRequestBodyOf, type ApiSuccessOf } from '../lib/api-client'
 import { createLocalGenerationError, type GenerationError } from '../lib/generation-errors'
 import { withGenerationActive } from '../lib/generation-active'
+import { fetchProviderCapabilities, stageProviderInput } from '../lib/providers'
+import { checkCapability } from '../../shared/providers'
 import { useAppSettings } from '../contexts/AppSettingsContext'
 
 const POLLING_INTERVAL_MS = 2000
@@ -205,6 +207,28 @@ export function useGeneration(): UseGenerationReturn {
 
     await withGenerationActive(async () => {
       try {
+        // Ask the active provider what it supports before spending a request on it. The
+        // backend validates this too (422 INVALID_VIDEO_GENERATION_SPEC); doing it here is
+        // what turns "422" into a sentence naming the provider and the supported values —
+        // which matters most when the backend is on another machine whose logs aren't at
+        // hand. A provider that reports no model matrix is not second-guessed.
+        const capabilities = await fetchProviderCapabilities()
+        const rejection = checkCapability(capabilities, {
+          model: settings.model,
+          resolution: settings.videoResolution,
+          fps: settings.fps,
+          duration: settings.duration,
+          needsImageInput: !!imagePath,
+          needsAudioInput: !!audioPath,
+        })
+        if (rejection) {
+          const detail = rejection.supported?.length
+            ? `${rejection.message} Supported: ${rejection.supported.join(', ')}.`
+            : rejection.message
+          setState(prev => ({ ...prev, isGenerating: false, error: createLocalGenerationError(detail) }))
+          return
+        }
+
         // Prepare JSON body
         const body: Record<string, unknown> = {
           prompt,
@@ -217,11 +241,13 @@ export function useGeneration(): UseGenerationReturn {
           negativePrompt: (settings as { negativePrompt?: string }).negativePrompt ?? '',
           aspectRatio: settings.aspectRatio || '16:9',
         }
+        // Conditioning inputs are passed to the backend by path, so a provider that doesn't
+        // share this filesystem has to be handed a copy first. No-op for the local one.
         if (imagePath) {
-          body.imagePath = imagePath
+          body.imagePath = await stageProviderInput(imagePath)
         }
         if (audioPath) {
-          body.audioPath = audioPath
+          body.audioPath = await stageProviderInput(audioPath)
         }
         if (settings.loras?.length) {
           body.loras = settings.loras.map(l => ({ ref: l.ref, scale: l.scale }))

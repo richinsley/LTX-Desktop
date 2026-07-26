@@ -57,6 +57,43 @@ const backendHealthStatus = z.object({
 
 export type BackendHealthStatus = z.infer<typeof backendHealthStatus>
 
+const backendProvider = z.object({
+  id: z.string(),
+  name: z.string(),
+  kind: z.enum(['managed-local', 'remote-http']),
+  baseUrl: z.string().optional(),
+  authToken: z.string().optional(),
+  artifactTransport: z.enum(['local-path', 'http-download', 'mapped-path']),
+  pathMap: z.object({ remoteRoot: z.string(), localRoot: z.string() }).optional(),
+})
+
+const providerCapabilities = z.object({
+  providerId: z.string(),
+  reachable: z.boolean(),
+  source: z.enum(['probed', 'declared']),
+  error: z.string().optional(),
+  activeModel: z.string().optional(),
+  gpuName: z.string().optional(),
+  vramMb: z.number().optional(),
+  videoModels: z.array(z.object({
+    pipeline: z.string(),
+    displayName: z.string(),
+    resolutions: z.record(z.string(), z.record(z.string(), z.array(z.number()))),
+  })),
+  features: z.object({
+    textToVideo: z.boolean(),
+    imageToVideo: z.boolean(),
+    audioToVideo: z.boolean(),
+    extend: z.boolean(),
+    retake: z.boolean(),
+    icLora: z.boolean(),
+    imageGeneration: z.boolean(),
+    artifactTransfer: z.boolean(),
+  }),
+  artifactTransport: z.enum(['local-path', 'http-download', 'mapped-path']),
+  probeMs: z.number().optional(),
+})
+
 export const electronAPISchemas = {
   // App info
   getBackend: {
@@ -286,6 +323,46 @@ export const electronAPISchemas = {
   notifyGenerationActive: {
     input: z.object({ active: z.boolean() }),
     output: z.void(),
+  },
+
+  // Backend providers — which backend serves generation requests. The default is the
+  // bundled local one and none of this is on that path.
+  listBackendProviders: {
+    input: z.object({}),
+    output: z.object({
+      activeProviderId: z.string(),
+      providers: z.array(backendProvider),
+    }),
+  },
+  setActiveBackendProvider: {
+    input: z.object({ id: z.string() }),
+    output: ipcResult({ activeProviderId: z.string() }),
+  },
+  upsertBackendProvider: {
+    input: backendProvider,
+    output: ipcResult({ provider: backendProvider }),
+  },
+  removeBackendProvider: {
+    input: z.object({ id: z.string() }),
+    output: emptyResult,
+  },
+  /** Probe a provider — the active one when `id` is omitted, any configured one otherwise. */
+  getBackendProviderCapabilities: {
+    input: z.object({ id: z.string().optional() }),
+    output: providerCapabilities,
+  },
+  /** Probe an unsaved provider draft, so "Test connection" works before committing it. */
+  testBackendProvider: {
+    input: backendProvider,
+    output: providerCapabilities,
+  },
+  /**
+   * Make a local input file (conditioning image/audio/video) reachable by the active
+   * provider, returning the path to send it. Identity for the local provider.
+   */
+  stageProviderInput: {
+    input: z.object({ path: z.string() }),
+    output: ipcResult({ path: z.string() }),
   },
 
   // Video processing

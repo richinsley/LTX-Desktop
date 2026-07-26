@@ -73,6 +73,24 @@ class HealthResponse(BaseModel):
     models_status: list[ModelStatusItem]
 
 
+class ArtifactCapabilitiesResponse(BaseModel):
+    """Answered by /api/artifacts/capabilities. Its presence is itself the signal that this
+    backend can exchange files with a client that does not share its filesystem."""
+
+    download: bool
+    upload: bool
+    outputs_dir: str
+    uploads_dir: str
+    max_upload_bytes: int
+
+
+class ArtifactUploadResponse(BaseModel):
+    """`path` is this backend's own absolute path — pass it back as imagePath/audioPath."""
+
+    path: str
+    size_bytes: int
+
+
 class GpuInfoResponse(BaseModel):
     cuda_available: bool
     mps_available: bool = False

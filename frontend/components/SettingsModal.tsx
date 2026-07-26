@@ -1,7 +1,8 @@
-import { AlertCircle, Check, Download, Film, Folder, HardDrive, Info, KeyRound, Settings, Sparkles, X, Zap } from 'lucide-react'
+import { AlertCircle, Check, Download, Film, Folder, HardDrive, Info, KeyRound, Server, Settings, Sparkles, X, Zap } from 'lucide-react'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from './ui/button'
 import { BaseModelSection } from './settings/BaseModelSection'
+import { BackendProviderSection } from './settings/BackendProviderSection'
 import { useAppSettings, type AppSettings } from '../contexts/AppSettingsContext'
 import { ApiClient, type ApiSuccessOf } from '../lib/api-client'
 import { logger } from '../lib/logger'
@@ -15,7 +16,7 @@ interface SettingsModalProps {
   initialTab?: TabId
 }
 
-type TabId = 'general' | 'models' | 'apiKeys' | 'promptEnhancer' | 'about'
+type TabId = 'general' | 'models' | 'backend' | 'apiKeys' | 'promptEnhancer' | 'about'
 
 /** Focuses an API Keys tab input once the modal has switched to that tab.
  *  Shared by the LTX and FAL key inputs — each call gets its own ref/pending state. */
@@ -135,7 +136,7 @@ export function SettingsModal({ isOpen, onClose, initialTab }: SettingsModalProp
   // The Models tab is hidden in force-API mode; don't let the selection get stuck there
   // (e.g. via initialTab or a stale value).
   useEffect(() => {
-    if (forceApiGenerations && activeTab === 'models') {
+    if (forceApiGenerations && (activeTab === 'models' || activeTab === 'backend')) {
       setActiveTab('general')
     }
   }, [forceApiGenerations, activeTab])
@@ -323,6 +324,8 @@ export function SettingsModal({ isOpen, onClose, initialTab }: SettingsModalProp
     // The Models tab is local-model management — irrelevant (and non-functional) when all
     // generation is forced through the API, so hide it in that mode.
     ...(!forceApiGenerations ? [{ id: 'models' as TabId, label: 'Models', icon: HardDrive }] : []),
+    // Backend selection is meaningless when every generation goes to the LTX API.
+    ...(!forceApiGenerations ? [{ id: 'backend' as TabId, label: 'Backend', icon: Server }] : []),
     { id: 'apiKeys' as TabId, label: 'API Keys', icon: KeyRound },
     { id: 'promptEnhancer' as TabId, label: 'Prompt Enhancer', icon: Sparkles },
     { id: 'about' as TabId, label: 'About', icon: Info },
@@ -810,6 +813,8 @@ export function SettingsModal({ isOpen, onClose, initialTab }: SettingsModalProp
           )}
 
           {activeTab === 'models' && !forceApiGenerations && <BaseModelSection />}
+
+          {activeTab === 'backend' && !forceApiGenerations && <BackendProviderSection />}
 
           {activeTab === 'apiKeys' && (
             <>

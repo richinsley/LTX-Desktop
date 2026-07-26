@@ -6,6 +6,7 @@ import { stopExportProcess } from './export/ffmpeg-utils'
 import { registerAppHandlers } from './ipc/app-handlers'
 import { registerFileHandlers } from './ipc/file-handlers'
 import { registerLogHandlers } from './ipc/log-handlers'
+import { registerProviderHandlers } from './ipc/provider-handlers'
 import { registerVideoProcessingHandlers } from './ipc/video-processing-handlers'
 import { logger } from './logger'
 import { initSessionLog } from './logging-management'
@@ -35,6 +36,7 @@ if (!gotLock) {
   registerLogHandlers()
   registerExportHandlers()
   registerVideoProcessingHandlers()
+  registerProviderHandlers()
 
   app.on('second-instance', () => {
     const mainWindow = getMainWindow()

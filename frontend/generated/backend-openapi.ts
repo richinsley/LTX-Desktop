@@ -4,6 +4,71 @@
  */
 
 export interface paths {
+    "/api/artifacts/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Route Artifact Capabilities
+         * @description GET /api/artifacts/capabilities — presence of this route is the capability signal.
+         *
+         *     A client probes this to decide whether a remote provider can return usable results at
+         *     all; an older backend answers 404 and the client reports artifact transfer unsupported.
+         */
+        get: operations["route_artifact_capabilities_api_artifacts_capabilities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/artifacts/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Route Artifact Download
+         * @description GET /api/artifacts/download?path=… — stream one generated file back to the client.
+         */
+        get: operations["route_artifact_download_api_artifacts_download_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/artifacts/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Route Artifact Upload
+         * @description POST /api/artifacts/upload — accept a conditioning input and return its local path.
+         *
+         *     The returned path is what the client should then pass as `imagePath`/`audioPath`.
+         */
+        post: operations["route_artifact_upload_api_artifacts_upload_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/huggingface/callback": {
         parameters: {
             query?: never;
@@ -753,6 +818,33 @@ export interface components {
             /** Userprefersltxapivideogenerations */
             userPrefersLtxApiVideoGenerations?: boolean | null;
         };
+        /**
+         * ArtifactCapabilitiesResponse
+         * @description Answered by /api/artifacts/capabilities. Its presence is itself the signal that this
+         *     backend can exchange files with a client that does not share its filesystem.
+         */
+        ArtifactCapabilitiesResponse: {
+            /** Download */
+            download: boolean;
+            /** Max Upload Bytes */
+            max_upload_bytes: number;
+            /** Outputs Dir */
+            outputs_dir: string;
+            /** Upload */
+            upload: boolean;
+            /** Uploads Dir */
+            uploads_dir: string;
+        };
+        /**
+         * ArtifactUploadResponse
+         * @description `path` is this backend's own absolute path — pass it back as imagePath/audioPath.
+         */
+        ArtifactUploadResponse: {
+            /** Path */
+            path: string;
+            /** Size Bytes */
+            size_bytes: number;
+        };
         /** AuthorSpec */
         AuthorSpec: {
             /**
@@ -765,6 +857,14 @@ export interface components {
             name: string;
             /** Url */
             url?: string | null;
+        };
+        /** Body_route_artifact_upload_api_artifacts_upload_post */
+        Body_route_artifact_upload_api_artifacts_upload_post: {
+            /**
+             * File
+             * Format: binary
+             */
+            file: string;
         };
         /** CancelCancellingResponse */
         CancelCancellingResponse: {
@@ -2092,6 +2192,126 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    route_artifact_capabilities_api_artifacts_capabilities_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtifactCapabilitiesResponse"];
+                };
+            };
+            /** @description Client Error */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorResponse"];
+                };
+            };
+            /** @description Server Error */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorResponse"];
+                };
+            };
+        };
+    };
+    route_artifact_download_api_artifacts_download_get: {
+        parameters: {
+            query: {
+                path: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Client Error */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorResponse"];
+                };
+            };
+            /** @description Server Error */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorResponse"];
+                };
+            };
+        };
+    };
+    route_artifact_upload_api_artifacts_upload_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_route_artifact_upload_api_artifacts_upload_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtifactUploadResponse"];
+                };
+            };
+            /** @description Client Error */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorResponse"];
+                };
+            };
+            /** @description Server Error */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorResponse"];
+                };
+            };
+        };
+    };
     route_hf_callback_api_auth_huggingface_callback_get: {
         parameters: {
             query?: {

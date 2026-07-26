@@ -8,6 +8,7 @@ import { validatePath, approvePath } from '../path-validation'
 import { getProjectAssetsPath, setProjectAssetsPath } from '../app-state'
 import { extractVideoFrameToFile, getVideoDimensions } from '../export/ffmpeg-utils'
 import { createDownsampledThumbnail, getImageDimensions, getThumbnailPaths } from './image-utils'
+import { getOutputStore } from '../storage/output-store'
 import { handle } from './typed-handle'
 
 const MIME_TYPES: Record<string, string> = {
@@ -87,25 +88,18 @@ function resolveLocalSourcePath(srcPath: string): string {
   return resolved
 }
 
-function getUniqueDestinationPath(destDir: string, fileName: string): string {
-  const parsed = path.parse(fileName)
-  let candidate = path.join(destDir, fileName)
-  let idx = 1
-  while (fs.existsSync(candidate)) {
-    candidate = path.join(destDir, `${parsed.name}(${idx})${parsed.ext}`)
-    idx += 1
-  }
-  return candidate
-}
-
-function copyToProjectAssetDirectory(srcPath: string, projectId: string): string {
-  const assetsRoot = getProjectAssetsPath()
-  const destDir = path.join(assetsRoot, projectId)
-  fs.mkdirSync(destDir, { recursive: true })
-  const fileName = path.basename(srcPath)
-  const destPath = getUniqueDestinationPath(destDir, fileName)
-  fs.copyFileSync(srcPath, destPath)
-  return destPath
+/**
+ * Bring a generated artifact within reach and copy it into project storage.
+ *
+ * For the local provider `materialize` is the identity, so this is the upstream
+ * copy-a-local-file path unchanged. For a remote provider it first fetches the file the
+ * provider named — the asset importers upstream call this with a path that only exists on
+ * the generating machine.
+ */
+async function copyToProjectAssetDirectory(srcPath: string, projectId: string): Promise<string> {
+  const store = getOutputStore()
+  const localPath = resolveLocalSourcePath(await store.materialize(srcPath))
+  return store.persist(localPath, projectId)
 }
 
 function createVideoBigThumbnail(videoPath: string, bigThumbnailPath: string): void {
@@ -292,10 +286,9 @@ export function registerFileHandlers(): void {
     return searchDirectoryForFilesImpl(directory, filenames)
   })
 
-  handle('addVisualAssetToProject', ({ srcPath, projectId, type }) => {
+  handle('addVisualAssetToProject', async ({ srcPath, projectId, type }) => {
     try {
-      const resolvedSrc = resolveLocalSourcePath(srcPath)
-      const destPath = copyToProjectAssetDirectory(resolvedSrc, projectId)
+      const destPath = await copyToProjectAssetDirectory(srcPath, projectId)
       const { bigThumbnailPath, smallThumbnailPath } = createVisualThumbnails(destPath, type)
       const { width, height } = getVisualAssetDimensions(destPath, type)
 
@@ -313,10 +306,9 @@ export function registerFileHandlers(): void {
     }
   })
 
-  handle('addGenericAssetToProject', ({ srcPath, projectId }) => {
+  handle('addGenericAssetToProject', async ({ srcPath, projectId }) => {
     try {
-      const resolvedSrc = resolveLocalSourcePath(srcPath)
-      const destPath = copyToProjectAssetDirectory(resolvedSrc, projectId)
+      const destPath = await copyToProjectAssetDirectory(srcPath, projectId)
       return { success: true, path: destPath }
     } catch (error) {
       logger.error(`Error copying file to project assets: ${error}`)

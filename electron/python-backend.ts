@@ -7,6 +7,8 @@ import { getCurrentDir, isDev } from './config'
 import { logger, writeLog } from './logger'
 import { getCurrentLogFilename } from './logging-management'
 import { getPythonDir } from './python-setup'
+import { getActiveProvider } from './providers/config'
+import type { BackendProvider } from '../shared/providers'
 import { getMainWindow } from './window'
 
 let pythonProcess: ChildProcess | null = null
@@ -275,7 +277,57 @@ export function getPythonPath(): string {
   return 'python'
 }
 
+/**
+ * Point the app at a remote provider: no process to spawn, so "starting the backend" is a
+ * reachability check against a URL someone else is serving.
+ *
+ * Ownership stays `null` — nothing here is ours to restart, and the liveness monitor stays
+ * off, since SIGTERM-ing a process on another machine is not an option and repeated probe
+ * failures against a LAN host mean a network blip far more often than a hung backend.
+ */
+async function connectRemoteProvider(provider: BackendProvider): Promise<void> {
+  const url = provider.baseUrl ?? ''
+  if (!url) {
+    publishBackendHealthStatus({ status: 'dead' })
+    throw new Error(`Provider "${provider.name}" has no base URL`)
+  }
+
+  stopLivenessMonitor()
+  backendOwnership = null
+  backendUrl = url
+  authToken = provider.authToken ?? null
+  // Admin endpoints are gated by a token this process generates for the backend it spawns;
+  // it has no counterpart on a machine we did not start.
+  adminToken = null
+
+  const healthy = await probeBackendHealth(5000, url)
+  if (!healthy) {
+    backendUrl = null
+    authToken = null
+    publishBackendHealthStatus({ status: 'dead' })
+    throw new Error(`Could not reach ${provider.name} at ${url}`)
+  }
+
+  logger.info(`Using remote backend provider "${provider.name}" at ${url}`)
+  publishBackendHealthStatus({ status: 'alive' })
+}
+
+/**
+ * Bring up whatever the active provider needs. For the built-in local provider this is the
+ * upstream spawn path, unchanged; for a remote one it is a health check.
+ *
+ * Named for the local case because that is what the renderer's IPC call is still called and
+ * what it does by default.
+ */
 export async function startPythonBackend(): Promise<void> {
+  const provider = getActiveProvider()
+  if (provider.kind === 'remote-http') {
+    // A managed backend left over from a previous selection would otherwise keep holding
+    // the GPU (and the port) while every request goes to the remote box.
+    if (pythonProcess) stopPythonBackend()
+    return connectRemoteProvider(provider)
+  }
+
   if (startPromise) {
     return startPromise
   }
@@ -442,6 +494,18 @@ export async function startPythonBackend(): Promise<void> {
       logger.info(`Python backend exited with code ${code}`)
       stopLivenessMonitor()
       pythonProcess = null
+      // This handler runs asynchronously, so it can land *after* a switch to a remote
+      // provider has already installed that provider's URL and token — clearing them here
+      // would leave the app pointing at nothing while the remote backend is up and chosen.
+      if (getActiveProvider().kind === 'remote-http') {
+        // Nothing below applies: the health we publish, and the URL we serve, belong to the
+        // remote provider now. Restarting or declaring "dead" here would describe a process
+        // the app is no longer using.
+        isIntentionalShutdown = false
+        backendOwnership = null
+        settleReject(new Error('Local backend stopped; a remote provider is active'))
+        return
+      }
       backendUrl = null
       authToken = null
       adminToken = null

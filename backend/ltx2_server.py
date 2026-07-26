@@ -348,7 +348,20 @@ if __name__ == "__main__":
         },
     }
 
-    config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="info", access_log=False, log_config=log_config)
+    # Loopback by default — unchanged for the desktop app, which spawns this process and
+    # talks to it over 127.0.0.1. LTX_HOST=0.0.0.0 makes the backend serve a LAN client
+    # (another machine running the app against this box's GPU). Opt-in, never implicit.
+    host = os.environ.get("LTX_HOST", "").strip() or "127.0.0.1"
+    if host not in {"127.0.0.1", "::1", "localhost"} and not auth_token:
+        # A non-loopback bind with no token is an unauthenticated generation endpoint on the
+        # network: anyone who can reach the port can spend the GPU and read every file under
+        # the outputs directory via /api/artifacts/download. Refuse rather than warn.
+        raise SystemExit(
+            f"LTX_HOST={host} binds beyond loopback but LTX_AUTH_TOKEN is unset. "
+            "Set LTX_AUTH_TOKEN to a shared secret, or bind to 127.0.0.1 and use an SSH tunnel."
+        )
+
+    config = uvicorn.Config(app, host=host, port=port, log_level="info", access_log=False, log_config=log_config)
     server = uvicorn.Server(config)
 
     _orig_startup = server.startup
@@ -356,8 +369,10 @@ if __name__ == "__main__":
     async def _startup_with_ready_msg(sockets: object = None) -> None:
         await _orig_startup(sockets=sockets)  # type: ignore[arg-type]
         if server.started:
-            # Machine-parseable ready message — Electron matches this line
-            print(f"Server running on http://127.0.0.1:{port}", flush=True)
+            # Machine-parseable ready message — Electron matches this line. It must keep
+            # naming a URL Electron can reach, so a 0.0.0.0 bind still advertises loopback.
+            advertised = "127.0.0.1" if host == "0.0.0.0" else host
+            print(f"Server running on http://{advertised}:{port}", flush=True)
 
     server.startup = _startup_with_ready_msg  # type: ignore[assignment]
 

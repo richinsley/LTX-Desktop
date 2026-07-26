@@ -232,6 +232,59 @@
         "title": "AppSettingsPatch",
         "type": "object"
       },
+      "ArtifactCapabilitiesResponse": {
+        "description": "Answered by /api/artifacts/capabilities. Its presence is itself the signal that this\nbackend can exchange files with a client that does not share its filesystem.",
+        "properties": {
+          "download": {
+            "title": "Download",
+            "type": "boolean"
+          },
+          "max_upload_bytes": {
+            "title": "Max Upload Bytes",
+            "type": "integer"
+          },
+          "outputs_dir": {
+            "title": "Outputs Dir",
+            "type": "string"
+          },
+          "upload": {
+            "title": "Upload",
+            "type": "boolean"
+          },
+          "uploads_dir": {
+            "title": "Uploads Dir",
+            "type": "string"
+          }
+        },
+        "required": [
+          "download",
+          "upload",
+          "outputs_dir",
+          "uploads_dir",
+          "max_upload_bytes"
+        ],
+        "title": "ArtifactCapabilitiesResponse",
+        "type": "object"
+      },
+      "ArtifactUploadResponse": {
+        "description": "`path` is this backend's own absolute path — pass it back as imagePath/audioPath.",
+        "properties": {
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path",
+          "size_bytes"
+        ],
+        "title": "ArtifactUploadResponse",
+        "type": "object"
+      },
       "AuthorSpec": {
         "properties": {
           "affiliation": {
@@ -263,6 +316,20 @@
           "name"
         ],
         "title": "AuthorSpec",
+        "type": "object"
+      },
+      "Body_route_artifact_upload_api_artifacts_upload_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_route_artifact_upload_api_artifacts_upload_post",
         "type": "object"
       },
       "CancelCancellingResponse": {
@@ -3704,6 +3771,151 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/artifacts/capabilities": {
+      "get": {
+        "description": "GET /api/artifacts/capabilities — presence of this route is the capability signal.\n\nA client probes this to decide whether a remote provider can return usable results at\nall; an older backend answers 404 and the client reports artifact transfer unsupported.",
+        "operationId": "route_artifact_capabilities_api_artifacts_capabilities_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArtifactCapabilitiesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorResponse"
+                }
+              }
+            },
+            "description": "Client Error"
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorResponse"
+                }
+              }
+            },
+            "description": "Server Error"
+          }
+        },
+        "summary": "Route Artifact Capabilities",
+        "tags": [
+          "artifacts"
+        ]
+      }
+    },
+    "/api/artifacts/download": {
+      "get": {
+        "description": "GET /api/artifacts/download?path=… — stream one generated file back to the client.",
+        "operationId": "route_artifact_download_api_artifacts_download_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorResponse"
+                }
+              }
+            },
+            "description": "Client Error"
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorResponse"
+                }
+              }
+            },
+            "description": "Server Error"
+          }
+        },
+        "summary": "Route Artifact Download",
+        "tags": [
+          "artifacts"
+        ]
+      }
+    },
+    "/api/artifacts/upload": {
+      "post": {
+        "description": "POST /api/artifacts/upload — accept a conditioning input and return its local path.\n\nThe returned path is what the client should then pass as `imagePath`/`audioPath`.",
+        "operationId": "route_artifact_upload_api_artifacts_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_route_artifact_upload_api_artifacts_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArtifactUploadResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorResponse"
+                }
+              }
+            },
+            "description": "Client Error"
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorResponse"
+                }
+              }
+            },
+            "description": "Server Error"
+          }
+        },
+        "summary": "Route Artifact Upload",
+        "tags": [
+          "artifacts"
+        ]
+      }
+    },
     "/api/auth/huggingface/callback": {
       "get": {
         "operationId": "route_hf_callback_api_auth_huggingface_callback_get",

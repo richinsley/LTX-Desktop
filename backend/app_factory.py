@@ -15,6 +15,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import Response as StarletteResponse
 
 from _routes._errors import HTTPError, build_http_error_response
+from _routes.artifacts import router as artifacts_router
 from _routes.generation import router as generation_router
 from _routes.hf_auth import router as hf_auth_router
 from _routes.health import router as health_router
@@ -167,5 +168,6 @@ def create_app(
     app.include_router(prompt_enhancement_router)
     app.include_router(runtime_policy_router)
     app.include_router(hf_auth_router)
+    app.include_router(artifacts_router)
 
     return app
