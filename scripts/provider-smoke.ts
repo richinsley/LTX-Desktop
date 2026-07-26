@@ -138,11 +138,29 @@ async function main(): Promise<void> {
   console.log('\n2. Capability check (the preflight the renderer runs)')
   const wanted = { model: args.model, resolution: args.resolution, fps: args.fps, duration: args.duration }
   const rejection = checkCapability(capabilities, wanted)
-  check(`${args.resolution}/${args.fps}fps/${args.duration}s accepted`, rejection === null, rejection?.message ?? '')
+
+  if (hasArtifacts) {
+    check(`${args.resolution}/${args.fps}fps/${args.duration}s accepted`, rejection === null, rejection?.message ?? '')
+  } else {
+    // A provider that cannot return files is refused up front rather than after a
+    // generation has already spent the GPU. That refusal is the correct outcome here, so
+    // check for it by code — "something was rejected" would also be satisfied by a
+    // rejection for an entirely different reason.
+    check('a provider that cannot return results is refused before generating',
+      rejection?.code === 'ARTIFACT_TRANSFER_UNSUPPORTED',
+      rejection ? `${rejection.code}: ${rejection.message}` : 'it was NOT refused')
+  }
 
   const absurd = checkCapability(capabilities, { model: args.model, resolution: args.resolution, fps: args.fps, duration: 9999 })
-  check('a 9999s request is refused before it is sent', absurd !== null,
-    absurd ? `${absurd.code}: ${absurd.message}` : 'it was NOT refused')
+  if (hasArtifacts) {
+    // Assert the code, not merely that something was refused: the artifact-transfer guard
+    // runs before the duration check, so a bare `!== null` would pass on a backend without
+    // artifact endpoints while never exercising the duration logic at all.
+    check('a 9999s request is refused before it is sent', absurd?.code === 'DURATION_UNSUPPORTED',
+      absurd ? `${absurd.code}: ${absurd.message}` : 'it was NOT refused')
+  } else {
+    console.log('  skip  duration refusal — unreachable behind the artifact-transfer guard on this backend')
+  }
 
   if (hasArtifacts) {
     console.log('\n3. Artifact round trip')

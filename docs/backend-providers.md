@@ -90,6 +90,12 @@ This matters more than it looks. The 10s/720p ceiling is a *policy table for 16â
 (`runtime_config/model_download_specs.py`), not a model limit. A 72GB box serves the same route with
 a different matrix, and the app now shows that box's answer.
 
+The preflight also refuses `ARTIFACT_TRANSFER_UNSUPPORTED`: an `http-download` provider that has no
+`/api/artifacts/*` (an older backend) is stopped *before* generating, rather than spending GPU time
+and failing at import. Note this guard runs ahead of the model/resolution/duration checks, so a test
+asserting a refusal must assert the *code* â€” "something was rejected" would also be satisfied by this
+one.
+
 ## Artifact transfer
 
 Three new endpoints, all bounded to directories the backend owns:
