@@ -340,7 +340,8 @@ class LtxInsufficientFundsErrorResponse(BaseModel):
 
 
 LTXVideoGenResolution: TypeAlias = Literal["540p", "720p", "1080p", "1440p", "2160p"]
-LTXVideoGenDuration: TypeAlias = Literal[5, 6, 8, 10, 12, 14, 16, 18, 20]
+# LOCAL PATCH (RTX PRO 5000 72GB): upstream ceiling is 20s; 30/45/60 added to probe this card's real limit.
+LTXVideoGenDuration: TypeAlias = Literal[5, 6, 8, 10, 12, 14, 16, 18, 20, 30, 45, 60]
 LTXVideoGenFps: TypeAlias = Literal[24, 25, 48, 50]
 LTXVideoGenPipeline: TypeAlias = Literal["fast", "pro"]
 

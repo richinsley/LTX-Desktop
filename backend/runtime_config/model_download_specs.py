@@ -100,9 +100,12 @@ _DISTILLED_PIPELINES: tuple[tuple[LTXVideoGenPipeline, LTXVideoGenerationSpec], 
                         24: (5, 6, 8, 10, 20),
                     },
                 ),
+                # LOCAL PATCH (RTX PRO 5000 72GB): upstream caps 720p at 10s, tuned for ~16-24GB cards.
+                # We have 72GB and peak at 26GiB for 720p/10s, so the full duration enum is unlocked here.
+                # Revert with ../../model_download_specs.py.orig if syncing upstream.
                 "720p": _local_resolution_spec(
                     fps_to_durations={
-                        24: (5, 6, 8, 10),
+                        24: (5, 6, 8, 10, 12, 14, 16, 18, 20, 30, 45, 60),
                     },
                 ),
                 "1080p": _local_resolution_spec(
