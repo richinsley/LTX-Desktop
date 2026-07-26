@@ -1,0 +1,30 @@
+{
+  // Type-checks the Electron main process, the preload script and the Vite config.
+  //
+  // `tsconfig.node.json` cannot do this: it is a `composite` project reference that emits to
+  // dist-electron with `rootDir: electron`, so it rejects both `vite.config.ts` and the
+  // `shared/` imports that electron/ and frontend/ both use (TS6059). Nothing else covered
+  // the main process — `pnpm typecheck:ts` includes only `frontend` and `shared` — so every
+  // line under electron/ reached production having been compiled by esbuild, which strips
+  // types without checking them.
+  //
+  // Kept separate from tsconfig.json rather than merged into it because the two have
+  // genuinely different lib/module settings: the renderer is DOM + ES2020, this is Node.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noEmit": true
+  },
+  "include": ["electron/**/*.ts", "shared/**/*.ts", "vite.config.ts"]
+}

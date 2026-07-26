@@ -54,7 +54,16 @@ export function fileHasAudio(ffmpegPath: string, filePath: string): boolean {
 
 
 /** Run an ffmpeg command and return a promise. Logs stderr and sets activeExportProcess. */
-export function runFfmpeg(ffmpegPath: string, args: string[]): Promise<{ success: boolean; error?: string }> {
+/**
+ * A discriminated union rather than `{ success: boolean; error?: string }`: every failure
+ * path below does set an error, but the optional-field shape doesn't say so, so callers
+ * forwarding `r.error` to the IPC layer — which requires a string on failure — were handing
+ * it `string | undefined`. That would surface as a zod schema rejection in place of the
+ * export error the user needed to read.
+ */
+export type FfmpegResult = { success: true } | { success: false; error: string }
+
+export function runFfmpeg(ffmpegPath: string, args: string[]): Promise<FfmpegResult> {
   return new Promise((resolve) => {
     logger.info( `[ffmpeg] spawn: ${args.join(' ').slice(0, 400)}`)
     const proc = spawn(ffmpegPath, args, { stdio: ['pipe', 'pipe', 'pipe'] })

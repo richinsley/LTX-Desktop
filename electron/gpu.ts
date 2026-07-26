@@ -17,11 +17,18 @@ export async function checkGPU(): Promise<{ available: boolean; name?: string; v
     })
 
     if (response.ok) {
-      const data = await response.json()
+      // `Response.json()` is `unknown` — this names the subset of GpuInfoResponse we read
+      // rather than letting four unchecked property accesses through.
+      const data = await response.json() as {
+        gpu_available?: boolean
+        cuda_available?: boolean
+        gpu_name?: string | null
+        vram_gb?: number | null
+      }
       return {
         available: data.gpu_available ?? data.cuda_available ?? false,
-        name: data.gpu_name,
-        vram: data.vram_gb
+        name: data.gpu_name ?? undefined,
+        vram: data.vram_gb ?? undefined
       }
     }
   } catch (error) {

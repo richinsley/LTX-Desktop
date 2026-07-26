@@ -563,8 +563,10 @@ function copyFileWithProgress(
     const readStream = fs.createReadStream(source)
     const writeStream = fs.createWriteStream(dest)
 
-    readStream.on('data', (chunk: Buffer) => {
-      copiedBytes += chunk.length
+    // The stream is opened without an encoding so chunks are always Buffers, but the
+    // listener signature is `string | Buffer` and `.length` means characters on a string.
+    readStream.on('data', (chunk: string | Buffer) => {
+      copiedBytes += typeof chunk === 'string' ? Buffer.byteLength(chunk) : chunk.length
       const totalDone = globalOffset + copiedBytes
       onProgress({
         status: 'downloading',
