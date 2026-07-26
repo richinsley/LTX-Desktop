@@ -18,6 +18,15 @@ report that hardware's real capabilities rather than a hardcoded table, and refu
 provider has said it cannot serve — with the same interface available later to other models or
 vendors.
 
+> **Note: Spellbound storage is intentionally not implemented in this branch.** The storage boundary
+> (`materialize` → `persist`) exists and is used, but only the local-gallery store is built. A
+> Spellbound store cannot be added behind this interface as it stands, because `ProjectAsset.path` is
+> still a local-file assumption across the **timeline, exporter and thumbnailer** — each of them opens
+> that path directly. Spellbound addresses content by (project, sub-stream, frame range), so `persist`
+> would have to return a reference richer than a path, and every one of those consumers would have to
+> stop assuming a file. That is a change to the asset model, not an adapter, and it belongs in its own
+> branch. See [Storage boundary](#storage-boundary-and-why-spellbound-stops-here) below.
+
 ## The seam
 
 One thing distinguishes providers, and everything else follows from it: **the backend's filesystem
@@ -144,13 +153,22 @@ The default `local-gallery` store is upstream behaviour exactly. The split is wh
 provider participate without touching the six call sites that import generated assets — they all go
 through `addVisualAssetToProject`.
 
-A Spellbound store would be the second implementation, and it is **not built here**. Spellbound
-addresses content by (project, sub-stream, frame range) rather than by file, so `persist` would have
-to return a reference richer than a path — and every consumer of `ProjectAsset.path` (the timeline,
-the exporter, the thumbnailer) assumes a file it can open. That is a real question about the asset
-model, not an adapter detail, and guessing at it would produce an interface shaped by neither side.
-The boundary is where the question becomes visible; that is as far as it should go until the asset
-model has an answer.
+A Spellbound store would be the second implementation, and it is **deliberately not built here**.
+
+The blocker is not the adapter — it is that `ProjectAsset.path` is a local-file assumption held
+across the whole app, not just at the import site:
+
+| Consumer | What it assumes about `path` |
+|---|---|
+| Timeline / monitors (`views/editor/ProgramMonitor.tsx`, `VideoEditorSourceMonitor.tsx`, `VideoEditorAssetsPanel.tsx`, `usePlaybackAudioSync.ts`, `components/VideoPreviewPanel.tsx`) | `pathToFileUrl(path)` yields a `file://` URL a `<video>`/`<audio>` element can play |
+| Exporter (`electron/export/export-handler.ts` → `video-filter.ts`, `audio-mix.ts`) | `clip.path` is handed to ffmpeg as `-i` |
+| Thumbnailer (`electron/ipc/file-handlers.ts` → `image-utils.ts`, `export/ffmpeg-utils.ts`) | a file on disk to seek a frame out of and downsample |
+
+Spellbound addresses content by (project, sub-stream, frame range) rather than by file, so `persist`
+would have to return a reference richer than a path, and each of those three would have to stop
+assuming a file. That is a change to the asset model, not an adapter detail, and guessing at it would
+produce an interface shaped by neither side. The boundary is where the question becomes visible; that
+is as far as it should go until the asset model has an answer.
 
 ## Known gaps
 
