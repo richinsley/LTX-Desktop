@@ -129,7 +129,17 @@ function createVisualThumbnails(assetPath: string, type: 'video' | 'image'): { b
     }
   }
 
-  createDownsampledThumbnail(bigThumbnailPath, smallThumbnailPath)
+  try {
+    createDownsampledThumbnail(bigThumbnailPath, smallThumbnailPath)
+  } catch (error) {
+    // Losing a generated clip because its *preview* couldn't be made is out of all
+    // proportion — and that is what used to happen: this threw, addVisualAssetToProject
+    // returned a failure, and the asset never reached the gallery even though the file was
+    // sitting in project storage. The big thumbnail already exists by this point, so use it
+    // for both; it is larger than intended, not missing.
+    logger.warn(`Falling back to the full-size thumbnail for ${path.basename(assetPath)}: ${error}`)
+    return { bigThumbnailPath, smallThumbnailPath: bigThumbnailPath }
+  }
   return { bigThumbnailPath, smallThumbnailPath }
 }
 
