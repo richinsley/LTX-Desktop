@@ -119,3 +119,57 @@ class TestProDispatch:
 
         response = client.post("/api/generate", json=self._payload("pro"))
         assert response.status_code >= 400
+
+
+class TestStepCount:
+    """The step count is res_2s *second-order* steps: each is two model evaluations, so the
+    default 15 equals the 30 Euler steps quoted for undistilled LTX-2.3. Exposing it is what
+    makes that budget a decision rather than a constant."""
+
+    def _payload(self, model: str, **extra: object) -> dict[str, object]:
+        return {
+            "prompt": "a slow pan across an empty room",
+            "model": model,
+            "resolution": "540p",
+            "duration": 5,
+            "fps": 24,
+            "audio": False,
+            "aspectRatio": "16:9",
+            **extra,
+        }
+
+    def test_pro_uses_the_tuned_default_when_unspecified(
+        self, client, test_state, fake_services, create_fake_model_files, create_full_model_files
+    ):
+        create_fake_model_files(include_zit=False)
+        create_full_model_files()
+        test_state.state.app_settings.use_local_text_encoder = True
+        test_state.config.local_generations_mode = "full_models_loading"
+
+        assert client.post("/api/generate", json=self._payload("pro")).status_code == 200
+        # None here means "the pipeline's own default" — the handler must not invent a number.
+        assert fake_services.hq_video_pipeline.generate_calls[-1]["num_inference_steps"] is None
+
+    def test_pro_honours_an_explicit_step_count(
+        self, client, test_state, fake_services, create_fake_model_files, create_full_model_files
+    ):
+        create_fake_model_files(include_zit=False)
+        create_full_model_files()
+        test_state.state.app_settings.use_local_text_encoder = True
+        test_state.config.local_generations_mode = "full_models_loading"
+
+        assert client.post("/api/generate", json=self._payload("pro", numSteps=25)).status_code == 200
+        assert fake_services.hq_video_pipeline.generate_calls[-1]["num_inference_steps"] == 25
+
+    def test_steps_are_refused_on_the_distilled_pipeline(
+        self, client, test_state, create_fake_model_files
+    ):
+        # Rejected rather than ignored: a silently-dropped quality knob is worth an hour of
+        # wondering why nothing changed.
+        create_fake_model_files(include_zit=False)
+        test_state.state.app_settings.use_local_text_encoder = True
+        test_state.config.local_generations_mode = "full_models_loading"
+
+        response = client.post("/api/generate", json=self._payload("fast", numSteps=25))
+        assert response.status_code == 422
+        assert "numSteps" in response.json()["message"]

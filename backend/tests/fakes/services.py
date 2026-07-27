@@ -759,6 +759,7 @@ class FakeHQVideoPipeline(_FakeVideoPipelineBase):
         frame_rate: float,
         images: list[ImageConditioningInput],
         output_path: str,
+        num_inference_steps: int | None = None,
     ) -> None:
         self._record_generate(
             {
@@ -770,6 +771,7 @@ class FakeHQVideoPipeline(_FakeVideoPipelineBase):
                 "frame_rate": frame_rate,
                 "images": images,
                 "output_path": output_path,
+                "num_inference_steps": num_inference_steps,
             }
         )
 

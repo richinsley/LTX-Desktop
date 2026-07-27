@@ -190,6 +190,12 @@ def validate_generate_video_request(
     *,
     use_api_specs: bool,
 ) -> str | None:
+    if req.numSteps is not None and req.model != "pro":
+        return (
+            f'numSteps is only supported by the "pro" pipeline; "{req.model}" uses a fixed '
+            "distilled schedule. Omit it, or switch model to \"pro\"."
+        )
+
     items = get_api_video_generation_model_specs() if use_api_specs else get_local_video_generation_model_specs()
     item = next((candidate for candidate in items if candidate.pipeline == req.model), None)
     generation_backend = "api" if use_api_specs else "local"

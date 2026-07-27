@@ -423,6 +423,12 @@ class GenerateVideoRequest(BaseModel):
     audioPath: str | None = None
     aspectRatio: Literal["16:9", "9:16"] = "16:9"
     seed: int | None = None
+    # Denoising steps, "pro" only. None uses the pipeline's tuned default (15).
+    # These are res_2s second-order steps: each costs TWO model evaluations, so 15 here is
+    # the same compute as 30 Euler steps — the figure quoted for undistilled LTX-2.3. The
+    # distilled "fast" pipeline has a baked-in schedule and rejects this rather than
+    # ignoring it, because a silently-dropped quality knob is worth an hour of confusion.
+    numSteps: int | None = Field(default=None, ge=1, le=100)
     loras: list[LoraEntry] = Field(default_factory=list[LoraEntry])
 
 

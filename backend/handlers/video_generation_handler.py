@@ -177,6 +177,7 @@ class VideoGenerationHandler(StateHandlerBase):
                     negative_prompt=req.negativePrompt,
                     loras=loras,
                     model_type=req.model,
+                    num_inference_steps=req.numSteps,
                 )
 
                 self._generation.complete_generation(output_path)
@@ -212,6 +213,7 @@ class VideoGenerationHandler(StateHandlerBase):
         negative_prompt: str,
         loras: list[tuple[str, float]] | None = None,
         model_type: VideoPipelineModelType = "fast",
+        num_inference_steps: int | None = None,
     ) -> str:
         t_total_start = time.perf_counter()
         gen_mode = "i2v" if image is not None else "t2v"
@@ -262,6 +264,12 @@ class VideoGenerationHandler(StateHandlerBase):
 
             t_inference_start = time.perf_counter()
             with log_heartbeat(f"{gen_mode} inference"):
+                # Only the full-model pipeline has a configurable schedule; the distilled
+                # one's is baked in, so the argument is passed only where it means something
+                # rather than being accepted and dropped.
+                extra_kwargs: dict[str, object] = {}
+                if model_type == "pro" and num_inference_steps is not None:
+                    extra_kwargs["num_inference_steps"] = num_inference_steps
                 pipeline_state.pipeline.generate(
                     prompt=enhanced_prompt,
                     seed=seed,
@@ -271,6 +279,7 @@ class VideoGenerationHandler(StateHandlerBase):
                     frame_rate=fps,
                     images=images,
                     output_path=str(output_path),
+                    **extra_kwargs,  # type: ignore[arg-type]
                 )
             t_inference_end = time.perf_counter()
             logger.info("[%s] Inference: %.2fs", gen_mode, t_inference_end - t_inference_start)

@@ -110,6 +110,7 @@ class LTXHQVideoPipeline:
         images: list[ImageConditioningInput],
         tiling_config: TilingConfigType,
         negative_prompt: str = "",
+        num_inference_steps: int | None = None,
     ) -> tuple[torch.Tensor | Iterator[torch.Tensor], AudioOrNone]:
         from ltx_pipelines.utils.args import ImageConditioningInput as _LtxImageInput
         from ltx_pipelines.utils.constants import LTX_2_3_HQ_PARAMS
@@ -122,7 +123,7 @@ class LTXHQVideoPipeline:
             width=width,
             num_frames=num_frames,
             frame_rate=frame_rate,
-            num_inference_steps=LTX_2_3_HQ_PARAMS.num_inference_steps,
+            num_inference_steps=num_inference_steps or LTX_2_3_HQ_PARAMS.num_inference_steps,
             video_guider_params=LTX_2_3_HQ_PARAMS.video_guider_params,
             audio_guider_params=LTX_2_3_HQ_PARAMS.audio_guider_params,
             images=[_LtxImageInput(img.path, img.frame_idx, img.strength) for img in images],
@@ -140,9 +141,11 @@ class LTXHQVideoPipeline:
         frame_rate: float,
         images: list[ImageConditioningInput],
         output_path: str,
+        num_inference_steps: int | None = None,
     ) -> None:
         tiling_config = default_tiling_config()
         video, audio = self._run_inference(
+            num_inference_steps=num_inference_steps,
             prompt=prompt,
             seed=seed,
             height=height,

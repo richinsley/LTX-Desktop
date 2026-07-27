@@ -40,6 +40,7 @@ class HQVideoPipeline(Protocol):
         frame_rate: float,
         images: list[ImageConditioningInput],
         output_path: str,
+        num_inference_steps: int | None = None,
     ) -> None:
         ...
 
