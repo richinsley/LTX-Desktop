@@ -117,6 +117,35 @@ be turned into a read of the whole disk. `tests/test_artifacts.py` covers both r
 `mapped-path` is the alternative for an NFS/SMB setup: no bytes move, the path prefix is rewritten,
 and a path outside the mapped root is an error rather than a lucky local hit.
 
+## Verified in the app
+
+2026-07-26: a MacBook (no Python, no models, no GPU) drove this workstation's RTX PRO 5000 over
+the LAN through the real UI — provider added from the backend-failed screen, first-run wizard
+satisfied by the remote box's models, a 540p/5s generation completed remotely, downloaded, and
+appeared in the local gallery with a thumbnail.
+
+**Six defects surfaced, none of which was reachable from a test harness.** Every one needed the
+app running on a machine that genuinely lacked the backend environment:
+
+| Defect | Why no test caught it |
+|---|---|
+| `connect-src` blocked LAN origins | CSP applies to the renderer; the smoke script is Node and transfers run in main |
+| "Add" saved a provider without selecting it | Only visible when the local backend is dead, i.e. on a modelless machine |
+| Reload fired from main raced the renderer's follow-up call | Timing-dependent; would have looked like a flake |
+| Browse offered a local folder picker for a remote path | Requires two machines to be wrong |
+| Thumbnails/dimensions shelled out to Python + Pillow | The client is defined by not having that environment |
+| A failed import retried forever, copying the media each time | Needed a *permanent* import failure, which only a modelless client produces |
+
+The last two are not remote-specific: any user whose thumbnailer failed would have lost the asset
+and then filled their disk. The feature found them; it did not cause them.
+
+### What a client machine actually needs
+
+Node, pnpm and git. Not Python, not `uv`, not models, not a GPU. Thumbnailing falls back to
+Electron's `nativeImage` when Pillow is absent, so nothing about the media path requires the
+backend's environment. Installing Pillow on a client would work but is the wrong instinct — it
+routes back through the Python path and stops exercising the one the feature depends on.
+
 ## Two things that only bite in the app
 
 Neither shows up in `scripts/provider-smoke.ts` or in any Node-side test, because both are
