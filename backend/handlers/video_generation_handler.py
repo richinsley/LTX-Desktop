@@ -25,6 +25,12 @@ from api_types import (
     ImageConditioningInput,
     LoraEntry,
     VideoCameraMotion,
+    ModelCheckpointID,
+)
+from runtime_config.model_download_specs import (
+    get_latest_ltx_model_id,
+    get_ltx_model_spec,
+    is_cp_downloaded,
 )
 from runtime_config.models_scanner import resolve_lora_ref
 from _routes._errors import HTTPError
@@ -42,7 +48,7 @@ from server_utils.media_validation import (
     validate_audio_file,
     validate_image_file,
 )
-from services.interfaces import LTXAPIClient
+from services.interfaces import LTXAPIClient, VideoPipelineModelType
 from services.ltx_api_client.ltx_api_client import LTXAPIClientError
 from state.app_state_types import AppState
 from state.app_settings import should_video_generate_with_ltx_api
@@ -83,7 +89,15 @@ class VideoGenerationHandler(StateHandlerBase):
         self._ltx_api_client = ltx_api_client
 
     def get_model_specs(self) -> GenerateVideoModelsSpecsResponse:
-        return build_generate_video_model_specs_response()
+        # Report what this install can run, not what the model family declares: the "pro"
+        # pipeline's checkpoints are a 54GB opt-in, and a client that trusts this list to
+        # build its UI would otherwise offer a model the backend has to refuse.
+        spec = get_ltx_model_spec(get_latest_ltx_model_id())
+        installed: set[ModelCheckpointID] = {
+            cp for cp in (spec.hq_model_cp, spec.hq_refiner_lora_cp)
+            if cp is not None and is_cp_downloaded(self.config.default_models_dir, cp)
+        }
+        return build_generate_video_model_specs_response(installed)
 
     def generate(self, req: GenerateVideoRequest) -> GenerateVideoResponse:
         use_api_specs = should_video_generate_with_ltx_api(
@@ -144,7 +158,11 @@ class VideoGenerationHandler(StateHandlerBase):
             loras = self._resolve_loras(req.loras)
 
             try:
-                self._pipelines.load_gpu_pipeline("fast", loras=loras)
+                # The requested tier, not an assumption. Both call sites used to hardcode
+                # "fast", which was correct while it was the only local pipeline and silently
+                # wrong the moment a second one existed — a "pro" request would run distilled
+                # and return a plausible video, so nothing would look broken.
+                self._pipelines.load_gpu_pipeline(req.model, loras=loras)
                 self._generation.start_generation(generation_id)
 
                 output_path = self.generate_video(
@@ -158,6 +176,7 @@ class VideoGenerationHandler(StateHandlerBase):
                     camera_motion=req.cameraMotion,
                     negative_prompt=req.negativePrompt,
                     loras=loras,
+                    model_type=req.model,
                 )
 
                 self._generation.complete_generation(output_path)
@@ -192,6 +211,7 @@ class VideoGenerationHandler(StateHandlerBase):
         camera_motion: VideoCameraMotion,
         negative_prompt: str,
         loras: list[tuple[str, float]] | None = None,
+        model_type: VideoPipelineModelType = "fast",
     ) -> str:
         t_total_start = time.perf_counter()
         gen_mode = "i2v" if image is not None else "t2v"
@@ -204,7 +224,7 @@ class VideoGenerationHandler(StateHandlerBase):
 
         self._generation.update_progress("loading_model", 5, 0, total_steps)
         t_load_start = time.perf_counter()
-        pipeline_state = self._pipelines.load_gpu_pipeline("fast", loras=loras)
+        pipeline_state = self._pipelines.load_gpu_pipeline(model_type, loras=loras)
         t_load_end = time.perf_counter()
         logger.info("[%s] Pipeline load: %.2fs", gen_mode, t_load_end - t_load_start)
 

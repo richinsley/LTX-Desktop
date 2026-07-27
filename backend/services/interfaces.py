@@ -7,6 +7,7 @@ from typing import Literal
 from services.a2v_pipeline.a2v_pipeline import A2VPipeline
 from services.depth_processor_pipeline.depth_processor_pipeline import DepthProcessorPipeline
 from services.fast_video_pipeline.fast_video_pipeline import FastVideoPipeline
+from services.hq_video_pipeline.hq_video_pipeline import HQVideoPipeline
 from services.zit_api_client.zit_api_client import ZitAPIClient
 from services.gpu_cleaner.gpu_cleaner import GpuCleaner
 from services.gpu_info.gpu_info import GpuInfo, GpuTelemetryPayload
@@ -23,7 +24,9 @@ from services.task_runner.task_runner import TaskRunner
 from services.text_encoder.text_encoder import TextEncoder
 from services.video_processor.video_processor import VideoInfoPayload, VideoProcessor
 
-VideoPipelineModelType = Literal["fast"]
+# "fast" is the distilled checkpoint (few-step, Euler); "pro" is the undistilled base model
+# through the two-stage HQ pipeline (res_2s sampler, CFG, distilled-LoRA stage-2 refine).
+VideoPipelineModelType = Literal["fast", "pro"]
 
 __all__ = [
     "A2VPipeline",
@@ -43,6 +46,7 @@ __all__ = [
     "TaskRunner",
     "VideoPipelineModelType",
     "FastVideoPipeline",
+    "HQVideoPipeline",
     "ZitAPIClient",
     "ImageGenerationPipeline",
     "IcLoraPipeline",

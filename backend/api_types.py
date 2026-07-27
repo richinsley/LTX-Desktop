@@ -12,6 +12,11 @@ NonEmptyPrompt = Annotated[str, StringConstraints(strip_whitespace=True, min_len
 ModelCheckpointID = Literal[
     "ltx-2.3-22b-distilled",
     "ltx-2.3-22b-distilled-1.1",
+    # The undistilled base model, plus the LoRA the two-stage HQ pipeline uses to refine
+    # stage 2. Both are optional: the app runs on the distilled checkpoint alone, and only
+    # offers the "pro" pipeline once these are present.
+    "ltx-2.3-22b-dev",
+    "ltx-2.3-22b-distilled-lora-384-1.1",
     "ltx-2.3-spatial-upscaler-x2-1.0",
     "ltx-2.3-spatial-upscaler-x2-1.1",
     "ltx-2.3-22b-ic-lora-union-control-ref0.5",

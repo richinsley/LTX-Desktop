@@ -709,6 +709,71 @@ class FakeFastVideoPipeline(_FakeVideoPipelineBase):
         )
 
 
+class FakeHQVideoPipeline(_FakeVideoPipelineBase):
+    """Fake for the full-model ("pro") pipeline.
+
+    Separate from FakeFastVideoPipeline so a test can assert which one a request actually
+    reached — the whole point of the "pro" tier is that it is a different pipeline, and a
+    shared fake would make a mis-dispatch invisible. `create_refiner_lora_paths` records the
+    stage-2 LoRA it was handed, which is the argument the fast pipeline has no notion of.
+    """
+
+    pipeline_kind = "pro"
+    _singleton: ClassVar["FakeHQVideoPipeline | None"] = None
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.create_refiner_lora_paths: list[str] = []
+        self.create_checkpoint_paths: list[str] = []
+
+    @classmethod
+    def bind_singleton(cls, pipeline: "FakeHQVideoPipeline") -> None:
+        cls._singleton = pipeline
+
+    @staticmethod
+    def create(
+        checkpoint_path: str,
+        gemma_root: str | None,
+        upsampler_path: str,
+        refiner_lora_path: str,
+        device: str | object,
+        streaming_prefetch_count: int | None,
+        loras: list[tuple[str, float]] | None = None,
+    ) -> "FakeHQVideoPipeline":
+        del gemma_root, upsampler_path, device, streaming_prefetch_count
+        pipeline = FakeHQVideoPipeline._singleton
+        if pipeline is None:
+            raise RuntimeError("FakeHQVideoPipeline singleton is not bound")
+        pipeline.create_loras.append(list(loras or []))
+        pipeline.create_checkpoint_paths.append(checkpoint_path)
+        pipeline.create_refiner_lora_paths.append(refiner_lora_path)
+        return pipeline
+
+    def generate(
+        self,
+        prompt: str,
+        seed: int,
+        height: int,
+        width: int,
+        num_frames: int,
+        frame_rate: float,
+        images: list[ImageConditioningInput],
+        output_path: str,
+    ) -> None:
+        self._record_generate(
+            {
+                "prompt": prompt,
+                "seed": seed,
+                "height": height,
+                "width": width,
+                "num_frames": num_frames,
+                "frame_rate": frame_rate,
+                "images": images,
+                "output_path": output_path,
+            }
+        )
+
+
 class FakeZitOutput:
     def __init__(self, color: str = "red") -> None:
         self.images = [Image.new("RGB", (32, 32), color)]
@@ -1010,6 +1075,7 @@ class FakeServices:
     zit_api_client: FakeZitAPIClient = field(default_factory=FakeZitAPIClient)
     fast_video_pipeline: FakeFastVideoPipeline = field(default_factory=FakeFastVideoPipeline)
     image_generation_pipeline: FakeImageGenerationPipeline = field(default_factory=FakeImageGenerationPipeline)
+    hq_video_pipeline: FakeHQVideoPipeline = field(default_factory=FakeHQVideoPipeline)
     ic_lora_pipeline: FakeIcLoraPipeline = field(default_factory=FakeIcLoraPipeline)
     depth_processor_pipeline: FakeDepthProcessorPipeline = field(default_factory=FakeDepthProcessorPipeline)
     pose_processor_pipeline: FakePoseProcessorPipeline = field(default_factory=FakePoseProcessorPipeline)
@@ -1019,6 +1085,7 @@ class FakeServices:
 
     def __post_init__(self) -> None:
         FakeFastVideoPipeline.bind_singleton(self.fast_video_pipeline)
+        FakeHQVideoPipeline.bind_singleton(self.hq_video_pipeline)
         FakeImageGenerationPipeline.bind_singleton(self.image_generation_pipeline)
         FakeIcLoraPipeline.bind_singleton(self.ic_lora_pipeline)
         FakeDepthProcessorPipeline.bind_singleton(self.depth_processor_pipeline)

@@ -67,6 +67,11 @@ class LTXLocalModelSpec:
     relevance: LTXLocalModelRelevance
     supported_pipelines: tuple[tuple[LTXVideoGenPipeline, LTXVideoGenerationSpec], ...]
     version_label: str
+    # The undistilled checkpoint and its stage-2 refiner LoRA. Present only on versions that
+    # have a matching full model published. Both are needed to run the "pro" pipeline, and
+    # neither is downloaded by default — 54GB for a quality tier is the user's call.
+    hq_model_cp: ModelCheckpointID | None = None
+    hq_refiner_lora_cp: ModelCheckpointID | None = None
     # The single newest model the app should recommend/upgrade to. Exactly one spec sets this
     # True (enforced in _validate_ltx_specs) so "latest" is explicit, not tuple-order-dependent.
     is_latest: bool = False
@@ -116,6 +121,30 @@ _DISTILLED_PIPELINES: tuple[tuple[LTXVideoGenPipeline, LTXVideoGenerationSpec], 
 )
 
 
+# The "pro" tier: the undistilled checkpoint through TI2VidTwoStagesHQPipeline. Stage 1 runs
+# at half the target resolution with CFG guidance, stage 2 upsamples x2 and refines with the
+# distilled LoRA, using the res_2s second-order sampler (15 steps — see
+# ltx_pipelines.utils.constants.LTX_2_3_HQ_PARAMS).
+#
+# The duration ceiling is lower than "fast" on purpose and this is not a policy table like the
+# one above: Lightricks caps the equivalent API tier at 10s, and our own coherence measurements
+# show fidelity models buying detail at the cost of length. Raise it only with measurements.
+_FULL_MODEL_PIPELINES: tuple[tuple[LTXVideoGenPipeline, LTXVideoGenerationSpec], ...] = (
+    (
+        "pro",
+        LTXVideoGenerationSpec(
+            display_name="LTX 2.3 Pro (full model)",
+            supported_resolutions_durations={
+                "540p": _local_resolution_spec(fps_to_durations={24: (5, 6, 8, 10)}),
+                "720p": _local_resolution_spec(fps_to_durations={24: (5, 6, 8, 10)}),
+                # The pipeline's native target: stage 1 at 960x544, x2 upsample to 1920x1088.
+                "1080p": _local_resolution_spec(fps_to_durations={24: (5, 6, 8, 10)}),
+            },
+        ),
+    ),
+)
+
+
 def get_model_cp_spec(cp_id: ModelCheckpointID) -> ModelCheckpointSpec:
     match cp_id:
         case "ltx-2.3-22b-distilled":
@@ -133,6 +162,22 @@ def get_model_cp_spec(cp_id: ModelCheckpointID) -> ModelCheckpointSpec:
                 is_folder=False,
                 repo_id="Lightricks/LTX-2.3",
                 description="Main transformer model",
+            )
+        case "ltx-2.3-22b-dev":
+            return ModelCheckpointSpec(
+                relative_path=Path("ltx-2.3-22b-dev.safetensors"),
+                expected_size_bytes=46_154_522_432,
+                is_folder=False,
+                repo_id="Lightricks/LTX-2.3",
+                description="Full (undistilled) transformer — higher fidelity, ~2x the compute",
+            )
+        case "ltx-2.3-22b-distilled-lora-384-1.1":
+            return ModelCheckpointSpec(
+                relative_path=Path("ltx-2.3-22b-distilled-lora-384-1.1.safetensors"),
+                expected_size_bytes=7_610_000_000,
+                is_folder=False,
+                repo_id="Lightricks/LTX-2.3",
+                description="Stage-2 refiner LoRA for the full-model pipeline",
             )
         case "ltx-2.3-spatial-upscaler-x2-1.0":
             # Superseded by 1.1, but kept as a known checkpoint so persisted settings /
@@ -231,9 +276,11 @@ def get_ltx_model_spec(model_id: LTXLocalModelId) -> LTXLocalModelSpec:
                 relevance=LTXLocalModelRelevant(
                     upgrade_messages={"ltx-2.3-22b-distilled": _DISTILLED_1_1_WHATS_NEW},
                 ),
-                supported_pipelines=_DISTILLED_PIPELINES,
+                supported_pipelines=_DISTILLED_PIPELINES + _FULL_MODEL_PIPELINES,
                 version_label="1.1",
                 is_latest=True,
+                hq_model_cp="ltx-2.3-22b-dev",
+                hq_refiner_lora_cp="ltx-2.3-22b-distilled-lora-384-1.1",
             )
         case "ltx-2.3-22b-distilled":
             return LTXLocalModelSpec(

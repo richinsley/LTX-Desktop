@@ -11,6 +11,7 @@ from state.conditioning_cache import ConditioningCache
 if TYPE_CHECKING:
     from state.app_settings import AppSettings
     from services.interfaces import (
+    HQVideoPipeline,
         A2VPipeline,
         DepthProcessorPipeline,
         FastVideoPipeline,
@@ -120,7 +121,7 @@ class TextEncoderState:
 
 @dataclass
 class VideoPipelineState:
-    pipeline: FastVideoPipeline
+    pipeline: FastVideoPipeline | HQVideoPipeline
     is_compiled: bool
     loras: tuple[tuple[str, float], ...] = field(default_factory=tuple)
     # gemma_root the pipeline's text encoder was built with. Part of the cache key: switching

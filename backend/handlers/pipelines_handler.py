@@ -21,6 +21,7 @@ from services.interfaces import (
     A2VPipeline,
     DepthProcessorPipeline,
     FastVideoPipeline,
+    HQVideoPipeline,
     ImageGenerationPipeline,
     GpuCleaner,
     IcLoraPipeline,
@@ -55,6 +56,7 @@ class PipelinesHandler(StateHandlerBase):
         text_handler: TextHandler,
         gpu_cleaner: GpuCleaner,
         fast_video_pipeline_class: type[FastVideoPipeline],
+        hq_video_pipeline_class: type[HQVideoPipeline],
         image_generation_pipeline_class: type[ImageGenerationPipeline],
         ic_lora_pipeline_class: type[IcLoraPipeline],
         depth_processor_pipeline_class: type[DepthProcessorPipeline],
@@ -67,6 +69,7 @@ class PipelinesHandler(StateHandlerBase):
         self._text_handler = text_handler
         self._gpu_cleaner = gpu_cleaner
         self._fast_video_pipeline_class = fast_video_pipeline_class
+        self._hq_video_pipeline_class = hq_video_pipeline_class
         self._image_generation_pipeline_class = image_generation_pipeline_class
         self._ic_lora_pipeline_class = ic_lora_pipeline_class
         self._depth_processor_pipeline_class = depth_processor_pipeline_class
@@ -152,14 +155,34 @@ class PipelinesHandler(StateHandlerBase):
         checkpoint_path = str(get_existing_cp_path(self.models_dir, spec.model_cp))
         upsampler_path = str(get_existing_cp_path(self.models_dir, spec.upscale_cp))
 
-        pipeline = self._fast_video_pipeline_class.create(
-            checkpoint_path,
-            gemma_root,
-            upsampler_path,
-            self.config.device,
-            streaming_prefetch_count_for_mode(self.config.local_generations_mode),
-            loras=loras or [],
-        )
+        prefetch = streaming_prefetch_count_for_mode(self.config.local_generations_mode)
+        pipeline: FastVideoPipeline | HQVideoPipeline
+        if model_type == "pro":
+            # The full model and its stage-2 refiner are optional downloads. Reaching here
+            # without them means the specs endpoint offered a pipeline this install can't
+            # run, so say which piece is missing rather than failing inside the loader.
+            if spec.hq_model_cp is None or spec.hq_refiner_lora_cp is None:
+                raise HTTPError(400, f"Model {model_id} has no full-model pipeline", code="PRO_PIPELINE_UNAVAILABLE")
+            hq_checkpoint_path = str(get_existing_cp_path(self.models_dir, spec.hq_model_cp))
+            refiner_lora_path = str(get_existing_cp_path(self.models_dir, spec.hq_refiner_lora_cp))
+            pipeline = self._hq_video_pipeline_class.create(
+                hq_checkpoint_path,
+                gemma_root,
+                upsampler_path,
+                refiner_lora_path,
+                self.config.device,
+                prefetch,
+                loras=loras or [],
+            )
+        else:
+            pipeline = self._fast_video_pipeline_class.create(
+                checkpoint_path,
+                gemma_root,
+                upsampler_path,
+                self.config.device,
+                prefetch,
+                loras=loras or [],
+            )
 
         state = VideoPipelineState(
             pipeline=pipeline,

@@ -12,6 +12,7 @@ from api_types import (
     LTXVideoGenFps,
     LTXVideoGenPipeline,
     LTXVideoGenResolution,
+    ModelCheckpointID,
 )
 from runtime_config.model_download_specs import get_latest_ltx_model_id, get_ltx_model_spec
 
@@ -124,18 +125,41 @@ def _pairs_to_items(
     ]
 
 
-def get_local_video_generation_model_specs() -> list[LTXVideoGenerationModelSpecItem]:
+def get_local_video_generation_model_specs(
+    installed_cps: set[ModelCheckpointID] | None = None,
+) -> list[LTXVideoGenerationModelSpecItem]:
+    """Local pipelines this install can actually run.
+
+    The "pro" pipeline needs two optional checkpoints (54GB) that are not part of the default
+    download. Advertising it when they are absent would offer the user a model that fails at
+    generation time — so when `installed_cps` is supplied, it is filtered out. Passing None
+    keeps the full declared set, which is what a caller describing the *model* rather than
+    *this install* wants.
+    """
     local_model_spec = get_ltx_model_spec(get_latest_ltx_model_id())
-    return _pairs_to_items(local_model_spec.supported_pipelines)
+    pairs: tuple[tuple[LTXVideoGenPipeline, LTXVideoGenerationSpec], ...] = local_model_spec.supported_pipelines
+    if installed_cps is not None:
+        required = {
+            "pro": {local_model_spec.hq_model_cp, local_model_spec.hq_refiner_lora_cp},
+        }
+        pairs = tuple(
+            (pipeline, spec)
+            for pipeline, spec in pairs
+            if None not in required.get(pipeline, set())
+            and required.get(pipeline, set()) <= installed_cps
+        )
+    return _pairs_to_items(pairs)
 
 
 def get_api_video_generation_model_specs() -> list[LTXVideoGenerationModelSpecItem]:
     return _pairs_to_items(ltx_api_model_specs)
 
 
-def build_generate_video_model_specs_response() -> GenerateVideoModelsSpecsResponse:
+def build_generate_video_model_specs_response(
+    installed_cps: set[ModelCheckpointID] | None = None,
+) -> GenerateVideoModelsSpecsResponse:
     return GenerateVideoModelsSpecsResponse(
-        local_models=get_local_video_generation_model_specs(),
+        local_models=get_local_video_generation_model_specs(installed_cps),
         api_models=get_api_video_generation_model_specs(),
     )
 
