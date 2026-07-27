@@ -64,8 +64,11 @@ request before spending a round trip.
 | IPC | `electron/ipc/provider-handlers.ts` |
 | Lifecycle dispatch | `electron/python-backend.ts` (`startPythonBackend`) |
 | UI | `frontend/components/settings/BackendProviderSection.tsx` (Settings → Backend) |
-| Preflight + input staging | `frontend/hooks/use-generation.ts` |
+| Preflight + input staging | `frontend/lib/providers.ts` (`preflightFeature`), called from all five generation hooks |
 | Backend file endpoints | `backend/_routes/artifacts.py` |
+
+`checkFeature` / `preflightFeature` gate the non-matrix features — see
+[the preflight table](#every-path-that-spends-gpu-goes-through-the-same-preflight).
 
 `startPythonBackend()` keeps its name and its IPC entry point. For the local provider it is the
 upstream spawn path unchanged; for a remote one it stops any local backend still holding the GPU
@@ -176,15 +179,45 @@ assuming a file. That is a change to the asset model, not an adapter detail, and
 produce an interface shaped by neither side. The boundary is where the question becomes visible; that
 is as far as it should go until the asset model has an answer.
 
+## Every path that spends GPU goes through the same preflight
+
+Five entry points send work to a provider, and each one first asks the same two questions — can it
+run this, and can it hand the result back:
+
+| Entry point | Guard | Inputs staged |
+|---|---|---|
+| `use-generation.ts` `generate` | `checkCapability` (full matrix) | `imagePath`, `audioPath` |
+| `use-generation.ts` `generateImage` | `checkFeature('imageGeneration')` | `editSource` |
+| `use-extend.ts` | `checkFeature('extend')` | `videoPath` |
+| `use-retake.ts` | `checkFeature('retake')` | `videoPath` |
+| `use-ic-lora.ts` | `checkFeature('icLora')` | `videoPath`, `controlVideoPath`, `inputPath`, `referenceImagePath` |
+
+`checkFeature` is `checkCapability` minus the model/resolution/fps/duration axes, which don't apply
+to those features. Both delegate to one private `checkProviderUsable`, so the reachability and
+artifact-transfer rules have a single definition rather than five drifting copies.
+
+`preflightFeature(feature, inputs)` in `frontend/lib/providers.ts` does both halves in one call.
+Inputs are **keyed, not positional**, so each staged path keeps its own type (a required `string`
+stays a `string`) and adding an input can't silently shift what a call site destructures.
+
+## Checks
+
+```bash
+pnpm typecheck            # ts + electron + py, in parallel
+pnpm typecheck:ts         # renderer + shared
+pnpm typecheck:electron   # main process + preload + vite config  (added by this branch)
+pnpm test:shared          # capability rules, node --test, no framework
+pnpm backend:test         # pytest
+node scripts/provider-smoke.ts --base-url … [--token …] [--generate]
+```
+
 ## Known gaps
 
-- **Extend / Retake / IC-LoRA still assume a local path.** They take a *video* path from an existing
-  project asset and were not rewired through `stageProviderInput`. On a remote provider they will
-  fail; the generation path (t2v/i2v/a2v) is wired. Each is a one-line change at the call site once
-  someone wants it.
-- **`electron/` is not type-checked by CI.** `tsconfig.node.json` cannot compile standalone
-  (`vite.config.ts` sits outside its `rootDir`) — a pre-existing condition, unrelated to this
-  branch. The new Electron code was checked against `tsc` out-of-band and is clean.
 - **No streaming progress for uploads.** A large conditioning video is a silent wait.
-- **The renderer probes capabilities once per generation call.** Cheap against a local backend,
-  a round trip against a remote one; worth caching with invalidation if it shows up.
+- **The renderer probes capabilities once per request.** Cheap against a local backend, a round trip
+  against a remote one; worth caching with invalidation if it shows up in practice.
+- **A provider that can't return results can still be selected.** Settings shows "no artifact
+  endpoints (results cannot be imported)" on its capability line and every request is refused, but
+  nothing blocks the switch itself — deliberate, so an unreachable box can still be inspected.
+- **`tsconfig.node.json` remains broken for standalone compilation.** Left alone rather than fixed:
+  it is upstream's project reference and `tsconfig.electron.json` supersedes it for checking.

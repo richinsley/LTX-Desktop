@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { ApiClient } from '../lib/api-client'
 import { withGenerationActive } from '../lib/generation-active'
+import { preflightFeature } from '../lib/providers'
 import { logger } from '../lib/logger'
 
 export type RetakeMode = 'replace_audio_and_video' | 'replace_video' | 'replace_audio'
@@ -44,8 +45,15 @@ export function useRetake() {
     })
 
     await withGenerationActive(async () => {
+      // See use-extend: video_path is a path on the backend, which may not be this machine.
+      const preflight = await preflightFeature('retake', { videoPath: params.videoPath })
+      if (!preflight.ok) {
+        setState({ isRetaking: false, retakeStatus: '', retakeError: preflight.error, result: null })
+        return
+      }
+
       const result = await ApiClient.retake({
-        video_path: params.videoPath,
+        video_path: preflight.staged.videoPath,
         start_time: params.startTime,
         duration: params.duration,
         prompt: params.prompt,

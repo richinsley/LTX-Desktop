@@ -26,6 +26,7 @@
     "openapi:types": "openapi-typescript frontend/generated/backend-openapi.json -o frontend/generated/backend-openapi.ts",
     "openapi:generate": "pnpm openapi:export && pnpm openapi:types",
     "openapi:check": "pnpm openapi:generate && git diff --exit-code -- frontend/generated/backend-openapi.json frontend/generated/backend-openapi.ts",
+    "test:shared": "node --test shared/*.test.ts",
     "backend:test": "cd backend && uv sync --frozen --extra test --extra dev && uv run pytest -v --tb=short",
     "build": "node scripts/run-script.js scripts/local-build",
     "build:skip-python": "node scripts/run-script.js scripts/local-build --skip-python",

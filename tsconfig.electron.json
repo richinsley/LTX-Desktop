@@ -16,6 +16,9 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "types": ["node"],
+    // shared/*.test.ts imports with an explicit .ts extension so `node --test` can resolve
+    // it without a build step. Safe here: this project only ever type-checks (noEmit).
+    "allowImportingTsExtensions": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,

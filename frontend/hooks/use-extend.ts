@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { ApiClient } from '../lib/api-client'
 import { withGenerationActive } from '../lib/generation-active'
+import { preflightFeature } from '../lib/providers'
 import { logger } from '../lib/logger'
 
 export type ExtendDirection = 'start' | 'end'
@@ -42,8 +43,17 @@ export function useExtend() {
     setState({ isExtending: true, extendStatus: 'Generating', extendError: null, result: null })
 
     await withGenerationActive(async () => {
+      // `video_path` names a file in the *backend's* filesystem. Against a remote provider
+      // that is another machine, so the clip has to be staged there first — and there is no
+      // point spending the GPU at all if the provider can't hand the result back.
+      const preflight = await preflightFeature('extend', { videoPath: params.videoPath })
+      if (!preflight.ok) {
+        setState({ isExtending: false, extendStatus: '', extendError: preflight.error, result: null })
+        return
+      }
+
       const result = await ApiClient.extend({
-        video_path: params.videoPath,
+        video_path: preflight.staged.videoPath,
         duration: params.duration,
         prompt: params.prompt,
         mode: params.mode,

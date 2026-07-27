@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { ApiClient, type ApiRequestBodyOf } from '../lib/api-client'
 import { withGenerationActive } from '../lib/generation-active'
+import { preflightFeature } from '../lib/providers'
 import { logger } from '../lib/logger'
 
 export type IcLoraConditioningType = 'canny' | 'depth' | 'custom'
@@ -84,13 +85,27 @@ export function useIcLora() {
     })
 
     await withGenerationActive(async () => {
+      // Four separate paths reach the backend here, and every one is read on the backend's
+      // own filesystem — so all four have to be staged when that isn't this machine.
+      const preflight = await preflightFeature('icLora', {
+        videoPath: params.videoPath,
+        controlVideoPath: params.controlVideoPath,
+        inputPath: params.inputPath,
+        referenceImagePath: params.referenceImagePath,
+      })
+      if (!preflight.ok) {
+        setState({ isGenerating: false, status: '', error: preflight.error, result: null })
+        return
+      }
+      const staged = preflight.staged
+
       const result = await ApiClient.generateIcLora({
-        video_path: params.videoPath,
+        video_path: staged.videoPath,
         conditioning_type: params.conditioningType,
         conditioning_strength: params.conditioningStrength,
         prompt: params.prompt,
         custom_lora_ref: params.customLoraRef,
-        control_video_path: params.controlVideoPath,
+        control_video_path: staged.controlVideoPath,
         skip_stage_2: params.skipStage2,
         use_lora_in_stage_2: params.useLoraInStage2,
         resolution: params.resolution,
@@ -100,11 +115,11 @@ export function useIcLora() {
         fps_override: params.fpsOverride,
         ic_lora_id: params.icLoraId,
         variant_id: params.variantId,
-        input_path: params.inputPath,
+        input_path: staged.inputPath,
         control_values: params.controlValues,
         outpaint_pads: params.outpaintPads,
-        images: params.referenceImagePath
-          ? [{ path: params.referenceImagePath, frame: 0, strength: 1.0 }]
+        images: staged.referenceImagePath
+          ? [{ path: staged.referenceImagePath, frame: 0, strength: 1.0 }]
           : [],
       } as GenerateIcLoraBody)
       if (!result.ok) {

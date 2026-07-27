@@ -6,8 +6,8 @@
  * local input file into something the provider can read.
  */
 
-import type { BackendProvider, ProviderCapabilities } from '../../shared/providers'
-import { LOCAL_PROVIDER_ID } from '../../shared/providers'
+import type { BackendProvider, ImportingFeature, ProviderCapabilities } from '../../shared/providers'
+import { checkFeature, LOCAL_PROVIDER_ID } from '../../shared/providers'
 import { resetBackendCredentials } from './backend'
 import { logger } from './logger'
 
@@ -46,6 +46,42 @@ export async function stageProviderInput(localPath: string): Promise<string> {
   if (!result.success) throw new Error(result.error)
   if (result.path !== localPath) logger.info(`Staged input to provider as ${result.path}`)
   return result.path
+}
+
+/** `stageProviderInput` for a path that may not be set. */
+export async function stageOptionalInput(localPath: string | undefined): Promise<string | undefined> {
+  if (!localPath) return localPath
+  return stageProviderInput(localPath)
+}
+
+/**
+ * Everything a feature needs before it spends GPU: confirm the provider can run it and can
+ * hand the result back, then put its local input files where the provider can read them.
+ *
+ * Inputs are keyed rather than positional so the staged result carries each field's own
+ * type — a required path stays `string`, an optional one stays `string | undefined` — and
+ * so adding an input can't silently shift what a call site destructures.
+ *
+ * Staging failures come back through the same error channel as a capability rejection: a
+ * half-staged request isn't worth sending, and the caller already has somewhere to show it.
+ */
+export async function preflightFeature<T extends Record<string, string | undefined>>(
+  feature: ImportingFeature,
+  inputs: T,
+): Promise<{ ok: true; staged: T } | { ok: false; error: string }> {
+  const capabilities = await fetchProviderCapabilities()
+  const rejection = checkFeature(capabilities, feature)
+  if (rejection) return { ok: false, error: rejection.message }
+
+  try {
+    const staged: Record<string, string | undefined> = {}
+    for (const [key, localPath] of Object.entries(inputs)) {
+      staged[key] = await stageOptionalInput(localPath)
+    }
+    return { ok: true, staged: staged as T }
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) }
+  }
 }
 
 export function isLocalProvider(provider: BackendProvider | null | undefined): boolean {

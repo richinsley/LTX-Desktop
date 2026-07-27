@@ -172,6 +172,67 @@ export interface CapabilityRejection {
   supported?: (string | number)[]
 }
 
+/** Features that produce a file the app then has to import. */
+export type ImportingFeature = 'extend' | 'retake' | 'icLora' | 'imageGeneration' | 'textToVideo'
+
+const FEATURE_LABELS: Record<ImportingFeature, string> = {
+  extend: 'Extend',
+  retake: 'Retake',
+  icLora: 'IC-LoRA',
+  imageGeneration: 'Image generation',
+  textToVideo: 'Video generation',
+}
+
+/**
+ * Reasons to refuse *any* request, regardless of what it asks for: the provider isn't
+ * there, or it can't hand back what it produces.
+ *
+ * Shared so the artifact-transfer rule has one definition. It is the non-obvious one — a
+ * provider that generates fine but has no `/api/artifacts/*` will spend GPU time and only
+ * fail at import, which is the failure this catches.
+ */
+function checkProviderUsable(capabilities: ProviderCapabilities | null): CapabilityRejection | null {
+  if (!capabilities || !capabilities.reachable) {
+    return {
+      code: 'PROVIDER_UNREACHABLE',
+      message: capabilities?.error
+        ? `Backend provider is unreachable: ${capabilities.error}`
+        : 'Backend provider is unreachable.',
+    }
+  }
+
+  if (capabilities.artifactTransport === 'http-download' && !capabilities.features.artifactTransfer) {
+    return {
+      code: 'ARTIFACT_TRANSFER_UNSUPPORTED',
+      message: 'This provider does not support artifact transfer, so generated results cannot be imported.',
+    }
+  }
+
+  return null
+}
+
+/**
+ * Gate a feature that isn't parameterised by the video-generation matrix — Extend, Retake,
+ * IC-LoRA, image generation. Same usability rules as `checkCapability`, minus the
+ * model/resolution/fps/duration axes, which don't apply.
+ */
+export function checkFeature(
+  capabilities: ProviderCapabilities | null,
+  feature: ImportingFeature,
+): CapabilityRejection | null {
+  const unusable = checkProviderUsable(capabilities)
+  if (unusable) return unusable
+
+  if (!capabilities!.features[feature]) {
+    return {
+      code: 'FEATURE_UNSUPPORTED',
+      message: `${FEATURE_LABELS[feature]} is not available on this provider.`,
+    }
+  }
+
+  return null
+}
+
 /**
  * Refuse a request the provider has said it cannot serve, before it is sent.
  *
@@ -184,26 +245,16 @@ export function checkCapability(
   capabilities: ProviderCapabilities | null,
   request: CapabilityCheckRequest,
 ): CapabilityRejection | null {
-  if (!capabilities || !capabilities.reachable) {
-    return {
-      code: 'PROVIDER_UNREACHABLE',
-      message: capabilities?.error
-        ? `Backend provider is unreachable: ${capabilities.error}`
-        : 'Backend provider is unreachable.',
-    }
-  }
+  const unusable = checkProviderUsable(capabilities)
+  if (unusable) return unusable
+  // Non-null past this point: checkProviderUsable rejects a null/unreachable provider.
+  capabilities = capabilities as ProviderCapabilities
 
   if (request.needsImageInput && !capabilities.features.imageToVideo) {
     return { code: 'FEATURE_UNSUPPORTED', message: 'This provider does not support image-to-video.' }
   }
   if (request.needsAudioInput && !capabilities.features.audioToVideo) {
     return { code: 'FEATURE_UNSUPPORTED', message: 'This provider does not support audio-to-video.' }
-  }
-  if (capabilities.artifactTransport === 'http-download' && !capabilities.features.artifactTransfer) {
-    return {
-      code: 'ARTIFACT_TRANSFER_UNSUPPORTED',
-      message: 'This provider does not support artifact transfer, so generated results cannot be imported.',
-    }
   }
 
   // No model matrix at all: the provider told us nothing, so refusing here would block

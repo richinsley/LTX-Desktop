@@ -3,7 +3,7 @@ import type { GenerationSettings } from '../components/SettingsPanel'
 import { ApiClient, type ApiRequestBodyOf, type ApiSuccessOf } from '../lib/api-client'
 import { createLocalGenerationError, type GenerationError } from '../lib/generation-errors'
 import { withGenerationActive } from '../lib/generation-active'
-import { fetchProviderCapabilities, stageProviderInput } from '../lib/providers'
+import { fetchProviderCapabilities, preflightFeature, stageProviderInput } from '../lib/providers'
 import { checkCapability } from '../../shared/providers'
 import { useAppSettings } from '../contexts/AppSettingsContext'
 
@@ -417,6 +417,15 @@ export function useGeneration(): UseGenerationReturn {
     await withGenerationActive(async () => {
       let progressInterval: ReturnType<typeof setInterval> | null = null
       try {
+        // Same two questions as video: can this provider do it, and can it give the result
+        // back? `editSource` is a path the backend reads, so it is staged in the same step.
+        const preflight = await preflightFeature('imageGeneration', { editSource: editSource ?? undefined })
+        if (!preflight.ok) {
+          setState(prev => ({ ...prev, isGenerating: false, error: createLocalGenerationError(preflight.error) }))
+          return
+        }
+        const stagedEditSource = preflight.staged.editSource
+
         // Skip prompt enhancement for T2I - use original prompt directly
         const finalPrompt = prompt
 
@@ -460,7 +469,7 @@ export function useGeneration(): UseGenerationReturn {
           // strength is ignored server-side unless imagePath is set, but the request type
           // requires it — send the default rather than the edit-only setting when not editing.
           strength: isEditing ? (settings.imageEditStrength ?? 0.6) : 0.6,
-          ...(isEditing ? { imagePath: editSource } : {}),
+          ...(isEditing ? { imagePath: stagedEditSource } : {}),
         }
         const result = await ApiClient.generateImage(imageRequest, {
           signal: abortController.signal,
