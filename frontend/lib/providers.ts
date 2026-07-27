@@ -88,6 +88,17 @@ export function isLocalProvider(provider: BackendProvider | null | undefined): b
   return !provider || provider.id === LOCAL_PROVIDER_ID
 }
 
+/**
+ * The active provider, without probing it.
+ *
+ * `useBackendProvider` also fetches capabilities, which is a round trip to the backend —
+ * too much for callers that only need to know whether the backend is this machine.
+ */
+export async function getActiveBackendProvider(): Promise<BackendProvider | null> {
+  const { activeProviderId, providers } = await listBackendProviders()
+  return providers.find((p) => p.id === activeProviderId) ?? null
+}
+
 /** One line summarising a probe result, for the settings panel. */
 export function describeCapabilities(capabilities: ProviderCapabilities): string {
   if (!capabilities.reachable) return capabilities.error ?? 'Unreachable'

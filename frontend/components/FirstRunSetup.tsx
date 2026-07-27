@@ -4,6 +4,7 @@ import { formatBytes } from '../lib/format'
 import { logger } from '../lib/logger'
 import { useHfAuth } from '../hooks/use-hf-auth'
 import { useAppSettings } from '../contexts/AppSettingsContext'
+import { getActiveBackendProvider } from '../lib/providers'
 import './FirstRunSetup.css'
 
 interface LaunchGateProps {
@@ -138,9 +139,19 @@ export function LaunchGate({
   const [licenseError, setLicenseError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [isActionPending, setIsActionPending] = useState(false)
+  // Set when the backend is on another machine. Everything on this step — the path, the
+  // free space, the HF account — is read from that machine, so it must not be edited with
+  // local pickers.
+  const [remoteBackendName, setRemoteBackendName] = useState<string | null>(null)
   const { hfAuthStatus, hfAuthPolling, startHuggingFaceLogin } = useHfAuth(currentStep === 'location')
   const { saveLtxApiKey } = useAppSettings()
   const downloadQueueRef = useRef<DownloadStepSpec[]>([])
+
+  useEffect(() => {
+    void getActiveBackendProvider().then((provider) => {
+      setRemoteBackendName(provider && provider.kind === 'remote-http' ? provider.name : null)
+    }).catch(() => setRemoteBackendName(null))
+  }, [])
   const runningDownloadProgress = downloadProgress?.status === 'downloading' ? downloadProgress : null
   const totalProgress = runningDownloadProgress?.total_progress ?? (downloadProgress?.status === 'complete' ? 100 : 0)
 
@@ -603,7 +614,9 @@ export function LaunchGate({
                 Choose Location
               </h2>
               <p style={{ color: '#a0a0a0', fontSize: 14, marginBottom: 24 }}>
-                Select where to install the model files.
+                {remoteBackendName
+                  ? `Model files live on ${remoteBackendName}, which is serving this app. The path and free space below are that machine's.`
+                  : 'Select where to install the model files.'}
               </p>
 
               <div style={{
@@ -628,13 +641,22 @@ export function LaunchGate({
                     }}
                   />
                   <button
+                    disabled={remoteBackendName !== null}
+                    title={remoteBackendName
+                      ? `This path is on ${remoteBackendName}, not this computer — a folder picked here would not exist there.`
+                      : undefined}
                     onClick={async () => {
+                      // A local directory dialog cannot pick a path on another machine, and
+                      // handing the backend one that doesn't exist there is worse than not
+                      // offering the choice at all.
+                      if (remoteBackendName) return
                       const result = await window.electronAPI?.openModelsDirChangeDialog()
                       if (result?.success) {
                         setInstallPath(result.path)
                       }
                     }}
                     style={{
+                      opacity: remoteBackendName ? 0.4 : 1,
                       padding: '10px 28px',
                       borderRadius: 9999,
                       fontSize: 13,
