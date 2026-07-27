@@ -63,6 +63,10 @@ export const generationParamsSchema = z.object({
   cameraMotion: z.string(),
   imageAspectRatio: z.string().optional(),
   imageSteps: z.number().optional(),
+  // Denoising steps used by the "pro" video pipeline. Recorded so regenerating reproduces
+  // the render it came from — without it a 30-step hero shot silently regenerates at the
+  // default 15 and looks worse for no visible reason.
+  videoSteps: z.number().optional(),
   imageEditStrength: z.number().optional(),
   inputImageUrl: z.string().optional(),
   inputAudioUrl: z.string().optional(),

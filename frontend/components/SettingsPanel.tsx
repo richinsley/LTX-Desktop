@@ -9,6 +9,20 @@ import {
 
 export type GenerationMode = 'text-to-video' | 'image-to-video' | 'text-to-image'
 
+/** Matches the backend's LTX_2_3_HQ_PARAMS default. */
+const DEFAULT_PRO_STEPS = 15
+
+// Measured on an RTX PRO 5000 at 540p/5s: ~48s fixed overhead plus ~2.9s per step, so the
+// spread here is roughly 70s to 190s. Presets rather than a free field because the useful
+// range is narrow and the cost of a typo is minutes of GPU time.
+const PRO_STEP_OPTIONS: { steps: number; label: string }[] = [
+  { steps: 8, label: '8 — draft' },
+  { steps: 15, label: '15 — default' },
+  { steps: 20, label: '20' },
+  { steps: 30, label: '30 — best detail' },
+  { steps: 40, label: '40 — diminishing' },
+]
+
 export interface LoraSelection {
   ref: string
   name: string
@@ -22,6 +36,10 @@ export interface LoraSelection {
 export interface GenerationSettings {
   model: 'fast' | 'pro'
   duration: number
+  // Denoising steps for the "pro" pipeline only. Undefined means the backend's tuned
+  // default (15) — the UI does not restate it as a number, so the default can move upstream
+  // without every saved project pinning a stale value.
+  videoSteps?: number
   videoResolution: string
   fps: number
   audio: boolean
@@ -165,6 +183,25 @@ export function SettingsPanel({
           </option>
         ))}
       </Select>
+
+      {/* Steps are a "pro"-only knob: the distilled pipeline has a fixed schedule and the
+          backend rejects the field rather than ignoring it. These are res_2s second-order
+          steps — each is two model evaluations, so 15 already equals 30 Euler steps. Raising
+          it still helps visibly on detailed scenes, at roughly linear cost. */}
+      {(resolvedVideoOptions.selectedModel ?? settings.model) === 'pro' && (
+        <Select
+          label="Quality steps"
+          value={settings.videoSteps ?? DEFAULT_PRO_STEPS}
+          onChange={(e) => handleChange('videoSteps', parseInt(e.target.value))}
+          disabled={disabled}
+        >
+          {PRO_STEP_OPTIONS.map(({ steps, label }) => (
+            <option key={steps} value={steps}>
+              {label}
+            </option>
+          ))}
+        </Select>
+      )}
 
       {/* Duration, Resolution, FPS Row */}
       <div className={`grid gap-3 ${videoControlsColumns}`}>

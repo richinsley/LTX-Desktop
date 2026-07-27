@@ -41,6 +41,7 @@ const importVideo: RecoveryImporter = async (ctx, result, { addAsset, modelsDir 
       cameraMotion: 'none',
       imageAspectRatio: s?.aspectRatio,
       imageSteps: 4,
+      videoSteps: s?.videoSteps,
       inputImageUrl: ctx.inputImageUrl,
       inputAudioUrl: ctx.inputAudioUrl,
       loras: s?.loras && s.loras.length > 0

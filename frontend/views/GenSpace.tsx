@@ -1156,6 +1156,9 @@ const DEFAULT_VIDEO_SETTINGS = {
   variations: 1,
   audio: true,
   imageEditStrength: 0.6,
+  // "pro" only. Undefined rather than 15 so the backend's tuned default stays the single
+  // source of truth — pinning it here would freeze every new project at today's value.
+  videoSteps: undefined as number | undefined,
 }
 
 export function GenSpace() {
@@ -1741,6 +1744,7 @@ export function GenSpace() {
             cameraMotion: 'none',
             imageAspectRatio: savedVideoSettings.aspectRatio,
             imageSteps: 4,
+            videoSteps: savedVideoSettings.videoSteps,
             inputImageUrl: inputImage || undefined,
             inputAudioUrl: inputAudio || undefined,
             loras: isLocalMode && selectedLoras.length > 0

@@ -255,12 +255,22 @@ export function useGeneration(): UseGenerationReturn {
         if (settings.loras?.length) {
           body.loras = settings.loras.map(l => ({ ref: l.ref, scale: l.scale }))
         }
+        // "pro" only — the backend rejects numSteps on the distilled pipeline rather than
+        // ignoring it, so sending it unconditionally would fail every "fast" generation.
+        if (settings.model === 'pro' && settings.videoSteps) {
+          body.numSteps = settings.videoSteps
+        }
 
         // Poll for real progress from backend with time-based interpolation
         let lastPhase = ''
         let inferenceStartTime = 0
-        // Estimated inference time in seconds based on model
-        const estimatedInferenceTime = settings.model === 'pro' ? 120 : 45
+        // Estimated inference time in seconds, used only to interpolate the progress bar
+        // between backend phase updates. "pro" scales with its step count — measured at
+        // ~48s of fixed overhead plus ~2.9s per step on an RTX PRO 5000 at 540p — so a
+        // 30-step render no longer runs the bar to 95% and sits there for a minute.
+        const estimatedInferenceTime = settings.model === 'pro'
+          ? 48 + (settings.videoSteps ?? 15) * 3
+          : 45
 
         const pollProgress = async () => {
           if (!shouldApplyPollingUpdates) return

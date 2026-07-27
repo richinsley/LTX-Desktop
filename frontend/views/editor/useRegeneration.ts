@@ -244,6 +244,7 @@ export function useRegeneration(params: UseRegenerationParams) {
       : null
     const rawVideoSettings: GenerationSettings = {
       model: generationParams.model as 'fast' | 'pro',
+      videoSteps: generationParams.videoSteps,
       duration: generationParams.duration,
       videoResolution: normalizeVideoResolution(generationParams.resolution),
       fps: generationParams.fps,
