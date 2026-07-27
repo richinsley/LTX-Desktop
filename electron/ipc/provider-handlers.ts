@@ -20,7 +20,6 @@ import {
 } from '../providers/config'
 import { clearArtifactCache, stageInputFile } from '../providers/artifacts'
 import { getAuthToken, getBackendUrl, startPythonBackend, stopPythonBackend } from '../python-backend'
-import { getMainWindow } from '../window'
 import { handle } from './typed-handle'
 
 /**
@@ -68,15 +67,11 @@ export function registerProviderHandlers(): void {
 
   handle('upsertBackendProvider', (input) => {
     try {
-      const provider = upsertProvider(input)
-      // CSP arrives as a header on the document response, so a newly allowed origin only
-      // takes effect on the next load. Without this the provider saves, looks correct, and
-      // then every request to it is blocked by connect-src with no visible cause.
-      // Reloading here is cheap: adding a backend is deliberate and rare, and the screens
-      // it happens from (Settings, the backend-failed page) hold no unsaved work.
-      const window = getMainWindow()
-      if (window) setImmediate(() => window.webContents.reload())
-      return { success: true as const, provider }
+      // Saving only. The reload this needs for CSP is the caller's to trigger, *after* it
+      // has also activated the provider — reloading from here raced the renderer's own
+      // follow-up call and tore down the page before activation could run, leaving a saved
+      // but unselected provider and an app still pointed at the dead local backend.
+      return { success: true as const, provider: upsertProvider(input) }
     } catch (error) {
       return { success: false as const, error: error instanceof Error ? error.message : String(error) }
     }

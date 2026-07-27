@@ -72,6 +72,18 @@ export function BackendProviderSection() {
     }
   }, [draft])
 
+  /**
+   * Save the draft, make it the active backend, then reload.
+   *
+   * All three, because any two of them leave the user stranded. Saving without activating
+   * is what a user reads as "nothing happened" — worse on the backend-failed screen, where
+   * the app goes straight back to spawning the local backend it already can't run. And
+   * activating without reloading leaves the new origin outside `connect-src`, so every
+   * request the renderer makes to it is blocked.
+   *
+   * Activation happens in the main process, which isn't subject to CSP, so it succeeds
+   * before the reload — and the reload then comes up with the provider already selected.
+   */
   const saveDraft = useCallback(async () => {
     setBusy(true)
     setError(null)
@@ -81,13 +93,22 @@ export function BackendProviderSection() {
         setError(result.error)
         return
       }
+
+      const activation = await activate(result.provider.id)
+      if (!activation.ok) {
+        // Saved but unreachable: keep it in the list so the URL/token can be corrected
+        // rather than retyped, and don't reload into a state that looks like a crash.
+        setError(activation.error ?? 'Saved, but could not connect to it.')
+        return
+      }
+
       setDraft(emptyDraft)
       setDraftResult(null)
-      await refresh()
+      window.location.reload()
     } finally {
       setBusy(false)
     }
-  }, [draft, refresh])
+  }, [draft, activate])
 
   const remove = useCallback(async (id: string) => {
     setBusy(true)
@@ -202,10 +223,10 @@ export function BackendProviderSection() {
           <Button variant="outline" className="border-zinc-700" disabled={!canSubmit || busy} onClick={() => void testDraft()}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Test connection'}
           </Button>
-          <Button disabled={!canSubmit || busy} onClick={() => void saveDraft()}>Add</Button>
-          {/* The window reloads on Add so the new origin is covered by connect-src; saying so
-              keeps that from looking like a crash. */}
-          <span className="text-xs text-zinc-600">Adding a backend reloads the window.</span>
+          <Button disabled={!canSubmit || busy} onClick={() => void saveDraft()}>Add and connect</Button>
+          {/* The window reloads so the new origin is covered by connect-src; saying so keeps
+              that from looking like a crash. */}
+          <span className="text-xs text-zinc-600">Switches to this backend and reloads.</span>
         </div>
       </div>
     </div>
