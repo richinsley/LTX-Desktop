@@ -152,6 +152,34 @@ LTX_HOST=0.0.0.0 LTX_PORT=8000 LTX_AUTH_TOKEN="$(openssl rand -hex 32)" \
 
 Then Settings → Backend → add `http://<host>:8000` with that token, Test connection, Add, select.
 
+### Running the app on a machine that has no models
+
+This is the point of the feature, so it needs no Python, no `uv`, and no model download — Node, pnpm
+and git are the whole prerequisite. **Skip `pnpm setup:dev`**, which installs the backend and its
+several GB of torch:
+
+```bash
+git clone <fork> && cd LTX-Desktop && git checkout feat/backend-providers
+corepack enable        # use the pnpm the repo pins; see below
+pnpm install
+pnpm dev
+```
+
+⚠ **Use the pinned pnpm.** `package.json` sets `packageManager: pnpm@10.30.3`, and the repo's
+build-script approval lives in `pnpm-workspace.yaml` as `allowBuilds:`. Installing with pnpm 11
+skips electron's postinstall — the step that downloads the Electron binary — and `pnpm dev` then
+dies with *"Electron failed to install correctly"* **after** Vite has built everything, which reads
+like a build failure and isn't one. pnpm 11 also ignores `pnpm.overrides` in package.json (it warns
+about this), so you silently get different transitive versions than upstream intends. Recovery
+without a full reinstall:
+
+```bash
+node node_modules/.pnpm/electron@<version>/node_modules/electron/install.js
+```
+
+The app then starts, fails to spawn a local backend, and shows the backend-failed screen — which is
+where you add the remote provider. That failure is the expected path here, not a problem.
+
 ## Verifying it
 
 ```bash
