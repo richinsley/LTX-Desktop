@@ -17,6 +17,7 @@ import { LaunchGate } from './components/FirstRunSetup'
 import { LtxUpgradePrompt } from './components/LtxUpgradePrompt'
 import { dismissUpgrade, isUpgradeDismissed } from './lib/upgrade-prompt-dismissals'
 import { PythonSetup } from './components/PythonSetup'
+import { BackendProviderSection } from './components/settings/BackendProviderSection'
 import { SettingsModal, type SettingsTabId } from './components/SettingsModal'
 import { LogViewer } from './components/LogViewer'
 import { ApiGatewayModal, type ApiGatewaySection } from './components/ApiGatewayModal'
@@ -443,14 +444,29 @@ function AppContent() {
 
   if (isBackendDead) {
     return (
-      <div className="h-screen bg-background flex items-center justify-center p-6">
-        <div className="w-full max-w-5xl rounded-xl border border-zinc-700 bg-zinc-900/80 p-6 shadow-2xl">
+      <div className="h-screen overflow-y-auto bg-background p-6">
+        <div className="mx-auto w-full max-w-5xl rounded-xl border border-zinc-700 bg-zinc-900/80 p-6 shadow-2xl">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">The backend process crashed and could not be restarted</h2>
-            <p className="text-muted-foreground mb-4">Review the logs below and restart the application.</p>
+            <h2 className="text-xl font-semibold text-foreground mb-2">The backend couldn&apos;t be started</h2>
+            <p className="text-muted-foreground mb-4">
+              Review the logs below and restart — or point the app at a backend running on another
+              machine.
+            </p>
           </div>
-          <div className="h-[50vh]">
+
+          {/*
+            Configuring a remote backend must be possible from here, not only from Settings.
+            Settings is unreachable until a backend is alive, so without this the one situation a
+            remote provider exists to solve — this machine can't run the models — is the one
+            situation you can't configure your way out of. This is the whole first-run path on a
+            laptop that will never host the 72GB model set.
+          */}
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4">
+            <BackendProviderSection />
+          </div>
+
+          <div className="mt-6 h-[40vh]">
             <LogViewer isOpen={true} onClose={() => {}} embedded={true} />
           </div>
           <div className="mt-4 flex justify-center">
