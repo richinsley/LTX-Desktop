@@ -8,6 +8,8 @@
               "enum": [
                 "ltx-2.3-22b-distilled",
                 "ltx-2.3-22b-distilled-1.1",
+                "ltx-2.3-22b-dev",
+                "ltx-2.3-22b-distilled-lora-384-1.1",
                 "ltx-2.3-spatial-upscaler-x2-1.0",
                 "ltx-2.3-spatial-upscaler-x2-1.1",
                 "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -390,6 +392,8 @@
               "enum": [
                 "ltx-2.3-22b-distilled",
                 "ltx-2.3-22b-distilled-1.1",
+                "ltx-2.3-22b-dev",
+                "ltx-2.3-22b-distilled-lora-384-1.1",
                 "ltx-2.3-spatial-upscaler-x2-1.0",
                 "ltx-2.3-spatial-upscaler-x2-1.1",
                 "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -435,6 +439,8 @@
             "enum": [
               "ltx-2.3-22b-distilled",
               "ltx-2.3-22b-distilled-1.1",
+              "ltx-2.3-22b-dev",
+              "ltx-2.3-22b-distilled-lora-384-1.1",
               "ltx-2.3-spatial-upscaler-x2-1.0",
               "ltx-2.3-spatial-upscaler-x2-1.1",
               "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -488,6 +494,8 @@
               "enum": [
                 "ltx-2.3-22b-distilled",
                 "ltx-2.3-22b-distilled-1.1",
+                "ltx-2.3-22b-dev",
+                "ltx-2.3-22b-distilled-lora-384-1.1",
                 "ltx-2.3-spatial-upscaler-x2-1.0",
                 "ltx-2.3-spatial-upscaler-x2-1.1",
                 "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -565,6 +573,8 @@
               "enum": [
                 "ltx-2.3-22b-distilled",
                 "ltx-2.3-22b-distilled-1.1",
+                "ltx-2.3-22b-dev",
+                "ltx-2.3-22b-distilled-lora-384-1.1",
                 "ltx-2.3-spatial-upscaler-x2-1.0",
                 "ltx-2.3-spatial-upscaler-x2-1.1",
                 "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -585,6 +595,8 @@
               "enum": [
                 "ltx-2.3-22b-distilled",
                 "ltx-2.3-22b-distilled-1.1",
+                "ltx-2.3-22b-dev",
+                "ltx-2.3-22b-distilled-lora-384-1.1",
                 "ltx-2.3-spatial-upscaler-x2-1.0",
                 "ltx-2.3-spatial-upscaler-x2-1.1",
                 "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -606,6 +618,8 @@
                 "enum": [
                   "ltx-2.3-22b-distilled",
                   "ltx-2.3-22b-distilled-1.1",
+                  "ltx-2.3-22b-dev",
+                  "ltx-2.3-22b-distilled-lora-384-1.1",
                   "ltx-2.3-spatial-upscaler-x2-1.0",
                   "ltx-2.3-spatial-upscaler-x2-1.1",
                   "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -1101,6 +1115,19 @@
             "default": "",
             "title": "Negativeprompt",
             "type": "string"
+          },
+          "numSteps": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numsteps"
           },
           "prompt": {
             "minLength": 1,
@@ -2229,6 +2256,8 @@
                 "enum": [
                   "ltx-2.3-22b-distilled",
                   "ltx-2.3-22b-distilled-1.1",
+                  "ltx-2.3-22b-dev",
+                  "ltx-2.3-22b-distilled-lora-384-1.1",
                   "ltx-2.3-spatial-upscaler-x2-1.0",
                   "ltx-2.3-spatial-upscaler-x2-1.1",
                   "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -2828,6 +2857,8 @@
               "enum": [
                 "ltx-2.3-22b-distilled",
                 "ltx-2.3-22b-distilled-1.1",
+                "ltx-2.3-22b-dev",
+                "ltx-2.3-22b-distilled-lora-384-1.1",
                 "ltx-2.3-spatial-upscaler-x2-1.0",
                 "ltx-2.3-spatial-upscaler-x2-1.1",
                 "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -2862,6 +2893,8 @@
               "enum": [
                 "ltx-2.3-22b-distilled",
                 "ltx-2.3-22b-distilled-1.1",
+                "ltx-2.3-22b-dev",
+                "ltx-2.3-22b-distilled-lora-384-1.1",
                 "ltx-2.3-spatial-upscaler-x2-1.0",
                 "ltx-2.3-spatial-upscaler-x2-1.1",
                 "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -2913,6 +2946,8 @@
               "enum": [
                 "ltx-2.3-22b-distilled",
                 "ltx-2.3-22b-distilled-1.1",
+                "ltx-2.3-22b-dev",
+                "ltx-2.3-22b-distilled-lora-384-1.1",
                 "ltx-2.3-spatial-upscaler-x2-1.0",
                 "ltx-2.3-spatial-upscaler-x2-1.1",
                 "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -2943,6 +2978,8 @@
             "enum": [
               "ltx-2.3-22b-distilled",
               "ltx-2.3-22b-distilled-1.1",
+              "ltx-2.3-22b-dev",
+              "ltx-2.3-22b-distilled-lora-384-1.1",
               "ltx-2.3-spatial-upscaler-x2-1.0",
               "ltx-2.3-spatial-upscaler-x2-1.1",
               "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -3018,6 +3055,8 @@
               "enum": [
                 "ltx-2.3-22b-distilled",
                 "ltx-2.3-22b-distilled-1.1",
+                "ltx-2.3-22b-dev",
+                "ltx-2.3-22b-distilled-lora-384-1.1",
                 "ltx-2.3-spatial-upscaler-x2-1.0",
                 "ltx-2.3-spatial-upscaler-x2-1.1",
                 "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -3037,6 +3076,8 @@
               "enum": [
                 "ltx-2.3-22b-distilled",
                 "ltx-2.3-22b-distilled-1.1",
+                "ltx-2.3-22b-dev",
+                "ltx-2.3-22b-distilled-lora-384-1.1",
                 "ltx-2.3-spatial-upscaler-x2-1.0",
                 "ltx-2.3-spatial-upscaler-x2-1.1",
                 "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -3120,6 +3161,8 @@
               "enum": [
                 "ltx-2.3-22b-distilled",
                 "ltx-2.3-22b-distilled-1.1",
+                "ltx-2.3-22b-dev",
+                "ltx-2.3-22b-distilled-lora-384-1.1",
                 "ltx-2.3-spatial-upscaler-x2-1.0",
                 "ltx-2.3-spatial-upscaler-x2-1.1",
                 "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -3146,6 +3189,8 @@
               "enum": [
                 "ltx-2.3-22b-distilled",
                 "ltx-2.3-22b-distilled-1.1",
+                "ltx-2.3-22b-dev",
+                "ltx-2.3-22b-distilled-lora-384-1.1",
                 "ltx-2.3-spatial-upscaler-x2-1.0",
                 "ltx-2.3-spatial-upscaler-x2-1.1",
                 "ltx-2.3-22b-ic-lora-union-control-ref0.5",
@@ -3729,6 +3774,8 @@
                 "enum": [
                   "ltx-2.3-22b-distilled",
                   "ltx-2.3-22b-distilled-1.1",
+                  "ltx-2.3-22b-dev",
+                  "ltx-2.3-22b-distilled-lora-384-1.1",
                   "ltx-2.3-spatial-upscaler-x2-1.0",
                   "ltx-2.3-spatial-upscaler-x2-1.1",
                   "ltx-2.3-22b-ic-lora-union-control-ref0.5",

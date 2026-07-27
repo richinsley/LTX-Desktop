@@ -779,7 +779,7 @@ export interface components {
         /** ActiveDownloadResponse */
         ActiveDownloadResponse: {
             /** Cp Ids */
-            cp_ids: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
+            cp_ids: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
             /** Session Id */
             session_id: string | null;
         };
@@ -894,7 +894,7 @@ export interface components {
         /** CheckModelAccessRequest */
         CheckModelAccessRequest: {
             /** Cp Ids */
-            cp_ids?: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
+            cp_ids?: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
         };
         /** CheckModelAccessResponse */
         CheckModelAccessResponse: {
@@ -909,7 +909,7 @@ export interface components {
              * Cp Id
              * @enum {string}
              */
-            cp_id: "ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo";
+            cp_id: "ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo";
             /** Downloaded */
             downloaded: boolean;
             /** Name */
@@ -925,7 +925,7 @@ export interface components {
         /** DescribeCheckpointsRequest */
         DescribeCheckpointsRequest: {
             /** Cp Ids */
-            cp_ids: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
+            cp_ids: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
         };
         /** DescribeCheckpointsResponse */
         DescribeCheckpointsResponse: {
@@ -953,11 +953,11 @@ export interface components {
         /** DownloadProgressRunningResponse */
         DownloadProgressRunningResponse: {
             /** All Files */
-            all_files: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
+            all_files: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
             /** Completed Files */
-            completed_files: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
+            completed_files: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
             /** Current Downloading File */
-            current_downloading_file: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo") | null;
+            current_downloading_file: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo") | null;
             /** Current File Progress */
             current_file_progress: number;
             /** Error */
@@ -1180,6 +1180,8 @@ export interface components {
              * @default
              */
             negativePrompt: string;
+            /** Numsteps */
+            numSteps?: number | null;
             /** Prompt */
             prompt: string;
             /**
@@ -1592,7 +1594,7 @@ export interface components {
         /** ImageGenRecommendationResponse */
         ImageGenRecommendationResponse: {
             /** Cp To Download */
-            cp_to_download: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo") | null;
+            cp_to_download: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo") | null;
         };
         /** InputSpec */
         InputSpec: {
@@ -1790,7 +1792,7 @@ export interface components {
         /** LtxDownloadRecommendationResponse */
         LtxDownloadRecommendationResponse: {
             /** Cps To Download */
-            cps_to_download: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
+            cps_to_download: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
             /**
              * Status
              * @constant
@@ -1800,7 +1802,7 @@ export interface components {
         /** LtxIcLoraRecommendationResponse */
         LtxIcLoraRecommendationResponse: {
             /** Cps To Download */
-            cps_to_download: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
+            cps_to_download: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
         };
         /** LtxInsufficientFundsErrorResponse */
         LtxInsufficientFundsErrorResponse: {
@@ -1817,7 +1819,7 @@ export interface components {
             /** Active */
             active: boolean;
             /** Cps To Download */
-            cps_to_download: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
+            cps_to_download: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
             /** Installed */
             installed: boolean;
             /** Is Newest */
@@ -1828,7 +1830,7 @@ export interface components {
              * Model Cp
              * @enum {string}
              */
-            model_cp: "ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo";
+            model_cp: "ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo";
             /**
              * Model Id
              * @enum {string}
@@ -1853,9 +1855,9 @@ export interface components {
         /** LtxUpgradeRecommendationResponse */
         LtxUpgradeRecommendationResponse: {
             /** Cps To Delete */
-            cps_to_delete: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
+            cps_to_delete: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
             /** Cps To Download */
-            cps_to_download: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
+            cps_to_download: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
             /**
              * Ltx Model Id
              * @enum {string}
@@ -1879,12 +1881,12 @@ export interface components {
         /** ModelDeleteRequest */
         ModelDeleteRequest: {
             /** Cp Ids */
-            cp_ids?: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
+            cp_ids?: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
         };
         /** ModelDownloadRequest */
         ModelDownloadRequest: {
             /** Cp Ids */
-            cp_ids?: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
+            cp_ids?: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo")[];
             /**
              * Type
              * @default download
@@ -2177,7 +2179,7 @@ export interface components {
         /** TextEncoderRecommendationResponse */
         TextEncoderRecommendationResponse: {
             /** Cp To Download */
-            cp_to_download: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo") | null;
+            cp_to_download: ("ltx-2.3-22b-distilled" | "ltx-2.3-22b-distilled-1.1" | "ltx-2.3-22b-dev" | "ltx-2.3-22b-distilled-lora-384-1.1" | "ltx-2.3-spatial-upscaler-x2-1.0" | "ltx-2.3-spatial-upscaler-x2-1.1" | "ltx-2.3-22b-ic-lora-union-control-ref0.5" | "dpt-hybrid-midas" | "yolox-l-torchscript" | "dw-ll-ucoco-384-bs5" | "gemma-3-12b-it-qat-q4_0-unquantized" | "z-image-turbo") | null;
             /** Expected Size Bytes */
             expected_size_bytes: number;
             /** Expected Size Gb */
