@@ -297,8 +297,13 @@ export function registerFileHandlers(): void {
   })
 
   handle('addVisualAssetToProject', async ({ srcPath, projectId, type }) => {
+    // The copy lands before thumbnails and dimensions are computed, so a failure after it
+    // leaves a full-size media file on disk that the caller is never told about. A caller
+    // that retries then adds another copy per attempt — which is exactly what happened
+    // against a remote backend whose thumbnailer couldn't run: 46 duplicate mp4s.
+    let destPath: string | null = null
     try {
-      const destPath = await copyToProjectAssetDirectory(srcPath, projectId)
+      destPath = await copyToProjectAssetDirectory(srcPath, projectId)
       const { bigThumbnailPath, smallThumbnailPath } = createVisualThumbnails(destPath, type)
       const { width, height } = getVisualAssetDimensions(destPath, type)
 
@@ -311,6 +316,16 @@ export function registerFileHandlers(): void {
         height,
       }
     } catch (error) {
+      if (destPath) {
+        const { bigThumbnailPath, smallThumbnailPath } = getThumbnailPaths(destPath)
+        for (const orphan of [destPath, bigThumbnailPath, smallThumbnailPath]) {
+          try {
+            fs.rmSync(orphan, { force: true })
+          } catch (cleanupError) {
+            logger.warn(`Could not remove partial asset ${orphan}: ${cleanupError}`)
+          }
+        }
+      }
       logger.error(`Error adding asset to project: ${error}`)
       return { success: false, error: String(error) }
     }

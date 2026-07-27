@@ -1,7 +1,13 @@
 import { ApiClient } from './api-client'
 import { GENERATION_RECOVERY_KEY, type GenerationRecoveryContext } from '../hooks/use-generation'
 import { builtinRecoveryImporters } from './generation-recovery-importers'
+import { logger } from './logger'
 import type { Asset } from '../types/project-model'
+
+// Three consecutive failures of the same import is enough to call it permanent. Retrying is
+// worth doing — a transient lock or a momentarily missing file does resolve — but each
+// attempt copies the media again, so the cost of being wrong grows with every tick.
+const MAX_IMPORT_ATTEMPTS = 3
 
 // Keyed the same way the recovery marker already is: undefined means the default "video" case
 // (t2v/i2v/a2v/ic-lora/retake/extend all recover as a standalone video asset today — see
@@ -96,9 +102,21 @@ export async function checkAndConsumeRecovery(
   if (status === 'complete' && progress.data.result != null) {
     try {
       await importer(ctx, progress.data.result, api)
-    } catch {
-      // Leave the marker in place so the next tick (or that project's own mount effect) can
-      // retry — a failed copy/import must not silently drop the result.
+    } catch (error) {
+      // Retry, but not forever. Leaving the marker on every failure means a permanently
+      // failing import (a thumbnailer that can't run, a full disk, a vanished source) is
+      // retried every poll for the life of the session — and each attempt copies the media
+      // again under a fresh unique name, so the loop fills the disk while it spins. A cause
+      // that has failed MAX_IMPORT_ATTEMPTS times in a row is not transient.
+      const attempts = (ctx.importAttempts ?? 0) + 1
+      if (attempts >= MAX_IMPORT_ATTEMPTS) {
+        logger.error(
+          `Giving up importing the recovered generation after ${attempts} attempts: ${error}`,
+        )
+        localStorage.removeItem(GENERATION_RECOVERY_KEY)
+        return
+      }
+      localStorage.setItem(GENERATION_RECOVERY_KEY, JSON.stringify({ ...ctx, importAttempts: attempts }))
       return
     }
   }

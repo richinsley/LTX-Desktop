@@ -28,6 +28,9 @@ export interface GenerationRecoveryContext {
   // (single global generation slot) that this marker's own generation has started — see
   // checkAndConsumeRecovery in lib/generation-recovery.ts.
   baselineId: string | null
+  // How many times importing this result has failed. Bounded in checkAndConsumeRecovery so a
+  // permanently failing import stops retrying instead of copying the media once per poll.
+  importAttempts?: number
   // Set once a poll observes an id different from baselineId — i.e. once this marker's own
   // generation is confirmed to exist. Distinct from baselineId: a LATER id change past this point
   // means a DIFFERENT generation superseded ours (not that ours just started), which must NOT be
