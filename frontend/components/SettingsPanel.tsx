@@ -10,12 +10,12 @@ import {
 export type GenerationMode = 'text-to-video' | 'image-to-video' | 'text-to-image'
 
 /** Matches the backend's LTX_2_3_HQ_PARAMS default. */
-const DEFAULT_PRO_STEPS = 15
+export const DEFAULT_PRO_STEPS = 15
 
 // Measured on an RTX PRO 5000 at 540p/5s: ~48s fixed overhead plus ~2.9s per step, so the
 // spread here is roughly 70s to 190s. Presets rather than a free field because the useful
 // range is narrow and the cost of a typo is minutes of GPU time.
-const PRO_STEP_OPTIONS: { steps: number; label: string }[] = [
+export const PRO_STEP_OPTIONS: { steps: number; label: string }[] = [
   { steps: 8, label: '8 — draft' },
   { steps: 15, label: '15 — default' },
   { steps: 20, label: '20' },

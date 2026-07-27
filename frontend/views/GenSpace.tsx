@@ -39,6 +39,7 @@ import {
 import { logger } from '../lib/logger'
 import { ApiClient, type ApiSuccessOf } from '../lib/api-client'
 import type { LoraSelection } from '../components/SettingsPanel'
+import { DEFAULT_PRO_STEPS, PRO_STEP_OPTIONS } from '../components/SettingsPanel'
 import { RetakePanel } from '../components/RetakePanel'
 import { ExtendPanel } from '../components/ExtendPanel'
 import { ICLoraPanel, CONDITIONING_TYPES } from '../components/ICLoraPanel'
@@ -529,6 +530,8 @@ function PromptBar({
     variations: number
     audio?: boolean
     imageEditStrength?: number
+    // "pro" only; undefined means the backend's tuned default.
+    videoSteps?: number
   }
   onSettingsChange: (settings: any) => void
   videoModelSpecs: VideoGenerationModelSpecItem[]
@@ -928,6 +931,28 @@ function PromptBar({
                     </>
                   }
                 />
+
+                {/* "pro" only: the distilled pipeline has a fixed schedule and the backend
+                    rejects the field rather than ignoring it. Sits next to MODEL because it is
+                    the other half of the same choice — which model, and how hard to work it. */}
+                {(resolvedVideoOptions.selectedModel ?? settings.model) === 'pro' && (
+                  <>
+                    <div className="w-px h-4 bg-zinc-700 mx-0.5" />
+
+                    <SettingsDropdown
+                      title="STEPS"
+                      value={String(settings.videoSteps ?? DEFAULT_PRO_STEPS)}
+                      onChange={(v) => onSettingsChange({ ...settings, videoSteps: parseInt(v) })}
+                      options={PRO_STEP_OPTIONS.map(({ steps, label }) => ({ value: String(steps), label }))}
+                      trigger={
+                        <>
+                          <Sparkles className="h-3.5 w-3.5" />
+                          <span>{settings.videoSteps ?? DEFAULT_PRO_STEPS} steps</span>
+                        </>
+                      }
+                    />
+                  </>
+                )}
 
                 <div className="w-px h-4 bg-zinc-700 mx-0.5" />
 
