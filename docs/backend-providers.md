@@ -117,6 +117,27 @@ be turned into a read of the whole disk. `tests/test_artifacts.py` covers both r
 `mapped-path` is the alternative for an NFS/SMB setup: no bytes move, the path prefix is rewritten,
 and a path outside the mapped root is an error rather than a lucky local hit.
 
+## Two things that only bite in the app
+
+Neither shows up in `scripts/provider-smoke.ts` or in any Node-side test, because both are
+properties of the *renderer* — which is also where every backend call actually originates.
+
+**CSP.** `electron/csp.ts` allows `connect-src` to localhost and 127.0.0.1 only. `backendFetch`
+runs in the renderer, so without a change there a LAN backend is blocked before the request leaves
+the process — while the main process's own transfers and any script keep working, so it looks like
+the app is broken rather than the policy. `connect-src` is now built from every configured
+provider's origin. CSP is delivered as a header on the document response, so a newly added origin
+needs a document load: `upsertBackendProvider` reloads the window, and the UI says so.
+
+**Bootstrap.** Provider settings used to live only in Settings, which is unreachable until a backend
+is alive. On a machine that cannot run the models — a laptop, i.e. exactly who wants a remote
+provider — first launch spawns the local backend, it dies, and the full-screen failure page offered
+only logs and Restart. The provider panel now renders on that page too.
+
+The required-models gate needs nothing special: it asks the backend over HTTP
+(`getLtxRecommendation` / `getImgGenRecommendation`), so a remote provider that has the models
+satisfies it.
+
 ## Serving on the LAN
 
 The backend binds `127.0.0.1` unless `LTX_HOST` says otherwise. `LTX_HOST=0.0.0.0` with no

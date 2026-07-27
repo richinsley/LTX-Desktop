@@ -198,11 +198,14 @@ export function BackendProviderSection() {
         {draftResult && <CapabilityLine capabilities={draftResult} />}
         {error && <div className="text-xs text-red-400">{error}</div>}
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Button variant="outline" className="border-zinc-700" disabled={!canSubmit || busy} onClick={() => void testDraft()}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Test connection'}
           </Button>
           <Button disabled={!canSubmit || busy} onClick={() => void saveDraft()}>Add</Button>
+          {/* The window reloads on Add so the new origin is covered by connect-src; saying so
+              keeps that from looking like a crash. */}
+          <span className="text-xs text-zinc-600">Adding a backend reloads the window.</span>
         </div>
       </div>
     </div>
